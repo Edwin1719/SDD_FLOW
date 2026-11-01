@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Simulador — Demo</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="banner">Demo: datos ficticios</div>
+  <main class="panel">
+    <h1 class="titulo">Simulador</h1>
+    <p>Ahora: {{ now }}</p>
+
+    <section class="seccion">
+      <h2 class="titulo">Controles</h2>
+      <form method="post" action="/sim/clock/advance">
+        <label>Avanzar horas:
+          <input type="number" name="hours" value="24" min="1">
+        </label>
+        <button type="submit">Adelantar</button>
+      </form>
+      <form method="post" action="/sim/fail-next-send">
+        <button type="submit">Forzar fallo del próximo envío</button>
+      </form>
+      <form method="post" action="/sim/reset">
+        <button type="submit">Restaurar datos</button>
+      </form>
+    </section>
+
+    <section class="seccion">
+      <h2 class="titulo">Responder como paciente</h2>
+      {% for cita in appointments %}
+      <div class="fila">
+        <span class="nombre">{{ cita.patient_name }} ({{ cita.status }})</span>
+        <form method="post" action="/sim/reply">
+          <input type="hidden" name="appointment_id" value="{{ cita.id }}">
+          <input type="hidden" name="starts_at" value="{{ cita.starts_at }}">
+          <button name="action" value="confirm">Confirmo</button>
+          <button name="action" value="reschedule">Reprogramar</button>
+          <button name="action" value="cancel">Cancelar</button>
+          <button name="action" value="optout">BAJA</button>
+        </form>
+      </div>
+      {% endfor %}
+    </section>
+
+    <section class="seccion">
+      <h2 class="titulo">Mensajes</h2>
+      <ul class="lista">
+        {% for m in messages %}
+        <li class="fila">
+          <span class="nombre">{{ m.to }}</span> {{ m.body }}
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+  </main>
+</body>
+</html>

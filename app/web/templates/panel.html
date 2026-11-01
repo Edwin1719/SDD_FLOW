@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recordatorios — Consultorio de la Dra. Laura</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  {% if demo %}
+  <div class="banner">Demo: datos ficticios</div>
+  {% endif %}
+  <main class="panel">
+    {% if attention %}
+    <section class="seccion">
+      <h2 class="titulo">{{ attention_title }}</h2>
+      <ul class="lista">
+        {% for cita in attention %}
+        <li class="fila">
+          <span class="barra barra-{{ cita.tone }}"></span>
+          <span class="hora">{{ cita.time }}</span>
+          <span class="nombre">{{ cita.name }}</span>
+          <span class="estado estado-{{ cita.tone }}">{{ cita.symbol }} {{ cita.label }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="seccion">
+      <h2 class="titulo">{{ agenda_title }}</h2>
+      {% if agenda %}
+        {% for dia in agenda %}
+        <h3 class="dia">{{ dia.date }}</h3>
+        <ul class="lista">
+          {% for cita in dia.appointments %}
+          <li class="fila">
+            <span class="hora">{{ cita.time }}</span>
+            <span class="nombre">{{ cita.name }}</span>
+            <span class="estado estado-{{ cita.tone }}">{{ cita.symbol }} {{ cita.label }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endfor %}
+      {% else %}
+        <p class="vacio">{{ empty_state }}</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

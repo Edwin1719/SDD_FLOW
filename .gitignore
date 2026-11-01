@@ -1,0 +1,26 @@
+# Secretos y configuración local (nunca se suben)
+.env
+.env.*
+!.env.example
+credentials.json
+token.json
+client_secret*.json
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Base de datos local
+*.db
+*.sqlite
+*.sqlite3
+
+# Editor y sistema operativo
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

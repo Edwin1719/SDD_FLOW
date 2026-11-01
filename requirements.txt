@@ -1,0 +1,14 @@
+# Dependencias de ejecución (modo demo)
+fastapi
+uvicorn
+jinja2
+python-multipart
+httpx
+
+# Desarrollo y pruebas
+pytest
+ruff
+
+# Solo modo real
+google-api-python-client
+google-auth-oauthlib
