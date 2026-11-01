@@ -57,11 +57,12 @@ Se toma de la línea `Tel:` de la descripción del evento. Tras quitar espacios,
 - SQLite (`sqlite3` estándar) en vez de Postgres → sin servicios que administrar. En un host de disco efímero los datos se pierden al reiniciar: en la demo se restauran; para producción real, migrar a un servicio gestionado.
 - Planificador en el mismo proceso, revisando cada 60 s con reloj inyectable → permite simular el tiempo en la demo (CA-1).
 - Sondeo de Calendar cada 5 min con syncToken en vez de notificaciones push → sin URL pública ni renovación de canales; cumple el «pocos minutos» de RF-3.
-- Puertos y adaptadores (constitución 7 y 13). `MODE=demo` (por defecto) usa FakeCalendar, SimulatedMessaging y SimulatedClock; `MODE=real` usa los reales. Los controles `/sim/*` no existen en modo real.
+- Puertos y adaptadores (constitución 7 y 13). `MODE=demo` (por defecto) usa FakeCalendar, SimulatedMessaging y SimulatedClock; `MODE=real` usa los reales. En demo, `FakeCalendar` también permite **crear, mover y cancelar** citas ficticias (simula editar Google Calendar, RF-3). Los controles `/sim/*` y `/agenda*` no existen en modo real.
 - Panel: contraseña única por variable de entorno y cookie de sesión firmada, solo en modo real.
 - Seguridad técnica: verificar la firma de cada petición del webhook de WhatsApp; pedir solo el permiso `calendar.events.readonly`; logs con teléfonos enmascarados (`+57******1234`) y sin nombres; secretos solo en variables de entorno (`.env.example` sin valores).
 - Valores iniciales configurables, a validar con la doctora: ventana de envío, 3 h para Sin confirmar, reintentos.
 - Dependencias de ejecución: fastapi, uvicorn, jinja2, python-multipart, httpx. Solo modo real: google-api-python-client, google-auth-oauthlib. Desarrollo: pytest y ruff (linter + formatter, `line-length = 88`, estilo uniforme sin el límite arbitrario de 79 de pycodestyle). Cualquier otra se justifica aquí; fijar versiones al instalar.
+- Identidad visual y tipografía: la skill `brand-design` define la paleta (blanco + azul corporativo), el logo de diente y la composición del panel. La fuente Atkinson Hyperlegible se carga vía Google Fonts con `font-display: swap` y respaldo `system-ui`; no es una dependencia de Python.
 - Variables: MODE, DATABASE_PATH, CLINIC_TIMEZONE, SEND_WINDOW_START/END, SYNC_INTERVAL_MINUTES, MAX_SEND_ATTEMPTS, UNCONFIRMED_AFTER_HOURS, PANEL_PASSWORD, SESSION_SECRET, GOOGLE_*, WHATSAPP_*.
 
 ## Rutas web
@@ -72,6 +73,8 @@ Se toma de la línea `Tel:` de la descripción del evento. Tras quitar espacios,
 | GET, POST /webhooks/whatsapp | real | Verificación inicial de Meta y recepción de respuestas |
 | GET /sim | demo | Conversaciones simuladas y botones «responder como paciente» |
 | POST /sim/reply, /sim/clock/advance, /sim/fail-next-send, /sim/reset | demo | Responder, adelantar la hora, forzar un fallo (CA-5), restaurar datos |
+| GET /agenda | demo | Agenda simulada (Google Calendar ficticio): vista por día y controles crear/mover/cancelar (CA-7) |
+| POST /agenda/create, /agenda/move, /agenda/cancel | demo | Crear, mover y cancelar citas ficticias; disparan sincronización (RF-3) |
 
 Cada botón de WhatsApp lleva un identificador con la cita, la fecha original y la acción (por ejemplo `appt:<id>:<fecha>:confirm`). Las plantillas `reminder_48h` y `reminder_24h` usan los textos de la spec 4.3 con tres botones de respuesta rápida y deben ser aprobadas por Meta.
 

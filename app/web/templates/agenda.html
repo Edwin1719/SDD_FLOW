@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenda simulada — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="cabecera">
+    <div class="marca">
+      <svg class="logo-diente" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.2-4.2-1.1-5.8.3C4.6 6.5 4 9.5 4 12c0 2.8.5 6.2 1.5 7.6.6.9 1.8 1.3 2.7.7.8-.4 1.1-1.2 1.1-2 0-1 .4-1.9 1.1-2.6.6-.6 1.5-.6 2.1 0 .7.7 1.1 1.6 1.1 2.6 0 .8.3 1.6 1.1 2 .9.6 2.1.2 2.7-.7 1-1.4 1.5-4.8 1.5-7.6 0-2.5-.6-5.5-2.2-7.2-1.6-1.4-4-1.5-5.8-.3z"/></svg>
+      <span class="marca-nombre">Consultorio de la Dra. Laura</span>
+    </div>
+    <span class="demo-badge">Demo · datos ficticios</span>
+  </header>
+
+  <main class="panel">
+    <div class="sim-cabecera">
+      <h1 class="titulo-pagina">Agenda</h1>
+      <a class="volver" href="/">Volver al panel</a>
+    </div>
+    <p class="agenda-subtitulo">Calendario simulado: representa Google Calendar, la fuente de verdad de las citas.</p>
+
+    <section class="seccion">
+      <h2 class="titulo">Nueva cita</h2>
+      <form class="nueva-cita" method="post" action="/agenda/create">
+        <label>Nombre del paciente
+          <input class="campo" type="text" name="patient_name" required>
+        </label>
+        <label>Teléfono (con código de país)
+          <input class="campo" type="tel" name="phone" placeholder="+57 300 123 4567">
+        </label>
+        <div class="formulario">
+          <label>Fecha
+            <input class="campo" type="date" name="date" required>
+          </label>
+          <label>Hora
+            <input class="campo" type="time" name="time" required>
+          </label>
+        </div>
+        <button class="boton" type="submit">Agregar cita</button>
+      </form>
+    </section>
+
+    <section class="seccion">
+      <h2 class="titulo">Citas del calendario</h2>
+      {% if agenda %}
+        {% for dia in agenda %}
+        <h3 class="dia">{{ dia.label }}</h3>
+        <ul class="lista">
+          {% for e in dia.events %}
+          <li class="evento">
+            <div class="evento-cabecera">
+              <span class="hora">{{ e.time }}</span>
+              <span class="nombre">{{ e.patient_name }}</span>
+              <span class="evento-telefono">{{ e.phone }}</span>
+            </div>
+            <div class="evento-acciones">
+              <form class="formulario" method="post" action="/agenda/move">
+                <input type="hidden" name="event_id" value="{{ e.event_id }}">
+                <input class="campo" type="date" name="date" value="{{ e.local_date }}" required>
+                <input class="campo" type="time" name="time" value="{{ e.local_time }}" required>
+                <button class="boton-secundario" type="submit">Mover</button>
+              </form>
+              <form method="post" action="/agenda/cancel">
+                <input type="hidden" name="event_id" value="{{ e.event_id }}">
+                <button class="boton-secundario" type="submit">Cancelar</button>
+              </form>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% endfor %}
+      {% else %}
+        <p class="vacio">No hay citas en el calendario.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

@@ -19,7 +19,7 @@ STATES = [
     ("reminder_sent", "Recordatorio enviado", "neutro"),
     ("confirmed", "Confirmada", "exito"),
     ("reschedule_requested", "Reprogramación solicitada", "atencion"),
-    ("cancelled_by_patient", "Cancelada por paciente", "info"),
+    ("cancelled_by_patient", "Cancelada por paciente", "morado"),
     ("unconfirmed", "Sin confirmar", "atencion"),
     ("send_error", "Error de envío", "peligro"),
     ("no_consent", "Sin consentimiento", "neutro"),

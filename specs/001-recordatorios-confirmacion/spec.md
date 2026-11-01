@@ -89,11 +89,20 @@ Neutros, sin detalles clínicos. Los textos exactos son:
 
 ### 4.4 Panel de la asistente (una pantalla, pensada para celular)
 
-1. **Requieren atención** (arriba): citas en estado Reprogramación solicitada,
+1. **Resumen** (arriba): tres cifras de un vistazo — citas de hoy, citas que
+   requieren atención y citas confirmadas hoy.
+2. **Requieren atención**: citas en estado Reprogramación solicitada,
    Cancelada por paciente (espacio liberado), Sin confirmar, Error de envío y
    Sin teléfono.
-2. **Agenda**: citas de hoy y de los próximos días, agrupadas por día, cada una
-   con su hora, nombre del paciente y estado visible con color y texto.
+3. **Agenda**: citas de hoy y de los próximos días, agrupadas por día con
+   encabezados fijos y fecha en español («Hoy», «Mañana», «Lunes 3 de
+   noviembre»), cada una con su hora, nombre del paciente y estado visible con
+   color y texto.
+
+El panel aplica de forma completa la identidad visual de la skill
+`brand-design`: tipografía cargada, superficies y filas con la jerarquía
+definida, controles estilizados (sin estilo por defecto del navegador), foco
+visible y objetivos táctiles de 44 px.
 
 La app **no modifica Google Calendar**: la asistente reprograma o elimina las
 citas allí, como hoy, y el sistema refleja el cambio.
@@ -108,6 +117,11 @@ El proyecto debe poder ejecutarse sin credenciales (ver constitución, principio
   pulsando los botones.
 - Se puede **avanzar la fecha y hora simuladas** para ver los recordatorios
   de 48 h y 24 h sin esperar.
+- Se muestra una **agenda simulada** que representa Google Calendar: una vista
+  por día de las citas ficticias con controles para **crear, mover y cancelar**
+  citas ficticias. Al crearlas aparecen en el panel y programan sus
+  recordatorios; al moverlas se descartan los pendientes y el ciclo se
+  reinicia; al cancelarlas no se envían más recordatorios (RF-3).
 
 ## 5. Requisitos funcionales (EARS)
 
@@ -173,7 +187,7 @@ El proyecto debe poder ejecutarse sin credenciales (ver constitución, principio
 
 ## 6. Criterios de aceptación (verificables en modo demo)
 
-Cinco criterios, todos comprobables en modo demo (sección 4.5).
+Siete criterios, todos comprobables en modo demo (sección 4.5).
 
 **CA-1 — Recordatorios escalonados** (RF-4, RF-5, RF-10)
 - Dado una cita futura con teléfono y consentimiento, cuando la fecha simulada
@@ -200,8 +214,20 @@ Cinco criterios, todos comprobables en modo demo (sección 4.5).
 - Dado un fallo simulado en el envío, cuando se agotan los reintentos,
   entonces la cita se muestra como Error de envío en «Requieren atención».
 
+**CA-6 — Calidad visual** (RF-17)
+- Dado el panel y el simulador en modo demo, cuando se inspeccionan a 360 px
+  de ancho, entonces no hay botones ni campos con el estilo por defecto del
+  navegador, las fechas y horas se muestran en español legible, y cada estado
+  se distingue por texto y color según la skill `brand-design`.
+
+**CA-7 — Agenda simulada interactiva** (RF-3, RF-4, RF-6)
+- Dado el modo demo, cuando la asistente crea una cita en la agenda simulada,
+  entonces aparece en el panel y programa sus recordatorios; cuando la mueve de
+  fecha u hora, se descartan los recordatorios de la fecha anterior y el ciclo
+  se reinicia en Pendiente; cuando la cancela, no se reciben más recordatorios.
+
 ### Criterios de finalización
-- Los cinco criterios se cumplen en modo demo.
+- Los siete criterios (CA-1 a CA-7) se cumplen en modo demo.
 - Cada requisito funcional tiene al menos una prueba automática. En
   particular: RF-8 (sin consentimiento no se envía), RF-10 (sin duplicados) y
   RF-14 (la última respuesta manda).

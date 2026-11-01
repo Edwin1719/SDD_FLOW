@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, time, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 import secrets
 from fastapi import APIRouter, Form, Request
@@ -15,13 +15,34 @@ from app.web.auth import SESSION_COOKIE, make_token, verify_token
 router = APIRouter()
 templates = Jinja2Templates(directory="app/web/templates")
 
+# Nombres de días y meses en español para fechas legibles (constitución 12).
+DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
+MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
+         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
+
+
+def dia_legible(day: date, hoy: date) -> str:
+    """Etiqueta del día: «Hoy», «Mañana» o «Lunes 3 de noviembre»."""
+    if day == hoy:
+        return "Hoy"
+    if day == hoy + timedelta(days=1):
+        return "Mañana"
+    return f"{DIAS_SEMANA[day.weekday()].capitalize()} {day.day} de {MESES[day.month - 1]}"
+
+
+def fecha_hora_legible(momento: datetime) -> str:
+    """Fecha y hora en español: «Lunes 3 de noviembre, 14:30»."""
+    d = momento.date()
+    nombre = f"{DIAS_SEMANA[d.weekday()].capitalize()} {d.day} de {MESES[d.month - 1]}"
+    return f"{nombre}, {momento.strftime('%H:%M')}"
+
 # Tonos y símbolos por estado (skill brand-design).
 STATE_TONES = {
     "pending": "neutro",
     "reminder_sent": "neutro",
     "confirmed": "exito",
     "reschedule_requested": "atencion",
-    "cancelled_by_patient": "info",
+    "cancelled_by_patient": "morado",
     "unconfirmed": "atencion",
     "send_error": "peligro",
     "no_consent": "neutro",
@@ -61,9 +82,15 @@ def panel(request: Request):
 
     attention: list[dict] = []
     days: dict = {}
+    citas_hoy = 0
+    confirmadas_hoy = 0
     for row in repo.list_upcoming_appointments(today_start_utc):
         local = datetime.fromisoformat(row["starts_at"]).astimezone(clinic_tz)
         status = row["status"]
+        if local.date() == local_today:
+            citas_hoy += 1
+            if status == "confirmed":
+                confirmadas_hoy += 1
         view = {
             "time": local.strftime("%H:%M"),
             "name": row["patient_name"],
@@ -76,8 +103,14 @@ def panel(request: Request):
         days.setdefault(local.date(), []).append(view)
 
     agenda = [
-        {"date": day.isoformat(), "appointments": items}
+        {"label": dia_legible(day, local_today), "appointments": items}
         for day, items in sorted(days.items())
+    ]
+
+    resumen = [
+        {"etiqueta": "Citas hoy", "numero": citas_hoy, "secundaria": "en la agenda"},
+        {"etiqueta": "Requieren atención", "numero": len(attention), "secundaria": "para revisar"},
+        {"etiqueta": "Confirmadas hoy", "numero": confirmadas_hoy, "secundaria": "pacientes confirmados"},
     ]
 
     return templates.TemplateResponse(
@@ -88,6 +121,7 @@ def panel(request: Request):
             "agenda_title": AGENDA_TITLE,
             "empty_state": EMPTY_STATE,
             "attention": attention,
+            "resumen": resumen,
             "agenda": agenda,
             "demo": request.app.state.mode == "demo",
         },

@@ -4,56 +4,81 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Simulador — Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <div class="banner">Demo: datos ficticios</div>
+  <header class="cabecera">
+    <div class="marca">
+      <svg class="logo-diente" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.2-4.2-1.1-5.8.3C4.6 6.5 4 9.5 4 12c0 2.8.5 6.2 1.5 7.6.6.9 1.8 1.3 2.7.7.8-.4 1.1-1.2 1.1-2 0-1 .4-1.9 1.1-2.6.6-.6 1.5-.6 2.1 0 .7.7 1.1 1.6 1.1 2.6 0 .8.3 1.6 1.1 2 .9.6 2.1.2 2.7-.7 1-1.4 1.5-4.8 1.5-7.6 0-2.5-.6-5.5-2.2-7.2-1.6-1.4-4-1.5-5.8-.3z"/></svg>
+      <span class="marca-nombre">Consultorio de la Dra. Laura</span>
+    </div>
+    <span class="demo-badge">Demo · datos ficticios</span>
+  </header>
+
   <main class="panel">
-    <h1 class="titulo">Simulador</h1>
-    <p>Ahora: {{ now }}</p>
+    <div class="sim-cabecera">
+      <h1 class="titulo-pagina">Simulador</h1>
+      <a class="volver" href="/">Volver al panel</a>
+    </div>
+    <p class="sim-ahora">Ahora: {{ now }}</p>
 
     <section class="seccion">
       <h2 class="titulo">Controles</h2>
-      <form method="post" action="/sim/clock/advance">
-        <label>Avanzar horas:
-          <input type="number" name="hours" value="24" min="1">
+      <form class="formulario" method="post" action="/sim/clock/advance">
+        <label>Avanzar horas
+          <input class="campo campo-corto" type="number" name="hours" value="24" min="1" inputmode="numeric">
         </label>
-        <button type="submit">Adelantar</button>
+        <button class="boton" type="submit">Adelantar</button>
       </form>
-      <form method="post" action="/sim/fail-next-send">
-        <button type="submit">Forzar fallo del próximo envío</button>
-      </form>
-      <form method="post" action="/sim/reset">
-        <button type="submit">Restaurar datos</button>
-      </form>
+      <div class="grupo-botones">
+        <form method="post" action="/sim/fail-next-send">
+          <button class="boton-secundario" type="submit">Forzar fallo de envío</button>
+        </form>
+        <form method="post" action="/sim/reset">
+          <button class="boton-secundario" type="submit">Restaurar datos</button>
+        </form>
+      </div>
     </section>
 
     <section class="seccion">
       <h2 class="titulo">Responder como paciente</h2>
-      {% for cita in appointments %}
-      <div class="fila">
-        <span class="nombre">{{ cita.patient_name }} ({{ cita.status }})</span>
-        <form method="post" action="/sim/reply">
-          <input type="hidden" name="appointment_id" value="{{ cita.id }}">
-          <input type="hidden" name="starts_at" value="{{ cita.starts_at }}">
-          <button name="action" value="confirm">Confirmo</button>
-          <button name="action" value="reschedule">Reprogramar</button>
-          <button name="action" value="cancel">Cancelar</button>
-          <button name="action" value="optout">BAJA</button>
-        </form>
-      </div>
-      {% endfor %}
+      <ul class="lista">
+        {% for cita in appointments %}
+        <li class="cita-sim">
+          <div class="cita-sim-cabecera">
+            <span class="nombre">{{ cita.patient_name }}</span>
+            <span class="estado estado-{{ cita.tone }}">{{ cita.symbol }} {{ cita.status_label }}</span>
+          </div>
+          <form class="grupo-botones" method="post" action="/sim/reply">
+            <input type="hidden" name="appointment_id" value="{{ cita.id }}">
+            <input type="hidden" name="starts_at" value="{{ cita.starts_at }}">
+            <button class="boton" name="action" value="confirm">Confirmo</button>
+            <button class="boton-secundario" name="action" value="reschedule">Reprogramar</button>
+            <button class="boton-secundario" name="action" value="cancel">Cancelar</button>
+            <button class="boton-secundario" name="action" value="optout">BAJA</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
     </section>
 
     <section class="seccion">
       <h2 class="titulo">Mensajes</h2>
-      <ul class="lista">
+      {% if messages %}
+      <ul class="conversacion">
         {% for m in messages %}
-        <li class="fila">
-          <span class="nombre">{{ m.to }}</span> {{ m.body }}
+        <li class="burbuja">
+          <span class="burbuja-meta">Para {{ m.to }}</span>
+          <span class="burbuja-texto">{{ m.body }}</span>
         </li>
         {% endfor %}
       </ul>
+      {% else %}
+      <p class="vacio">Todavía no se ha enviado ningún mensaje.</p>
+      {% endif %}
     </section>
   </main>
 </body>
