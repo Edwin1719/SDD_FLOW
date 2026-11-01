@@ -15,9 +15,17 @@ Dos elementos con identidad: el **logo de diente** (marca) y el **color de estad
 
 ## Cabecera y logo
 
-- Cabecera fija arriba, con el **logo de diente** (SVG de línea, color `--acento`) y el nombre **«Consultorio de la Dra. Laura» alineado a la izquierda**.
-- A la derecha, en modo demo, un badge «Demo · datos ficticios».
-- El diente es un ícono de línea simple (trazo uniforme, sin relleno); no se usan fotos ni ilustraciones.
+- **Logo de diente**: SVG de línea, trazo uniforme, sin relleno; no se usan fotos ni ilustraciones.
+- En **celular**, cabecera fija arriba con fondo `--acento` (azul), logo y nombre **«Consultorio de la Dra. Laura» en blanco**, alineado a la izquierda, y a la derecha el badge «Demo · datos ficticios».
+- En **escritorio**, la marca vive en la barra lateral (ver Navegación).
+
+## Navegación
+
+Tres vistas: **Panel** (`/`), **Agenda** (`/agenda`) y **Simulador** (`/sim`), enlazadas con navegación fija:
+
+- **Escritorio (≥768 px):** barra lateral izquierda fija con fondo `--acento` (azul), logo de diente y nombre en blanco arriba, y los tres ítems con ícono y etiqueta. El ítem activo se resalta (píldora blanca con texto azul).
+- **Celular (<768 px):** barra inferior fija con tres pestañas (ícono + etiqueta); la activa en `--acento`, las inactivas en gris.
+- Íconos de línea simples: cuadrícula (Panel), calendario (Agenda), reproducir (Simulador).
 
 ## Color
 
@@ -97,6 +105,7 @@ Base de 4 px (4, 8, 12, 16, 24, 32). Dos radios con jerarquía: 8 px en controle
 - Una columna, pensada primero para 360 px de ancho.
 - **Cabecera** con logo de diente y nombre, alineado a la izquierda.
 - **Resumen** (arriba): tres tarjetas con cifras de un vistazo — «Citas hoy», «Requieren atención» y «Confirmadas hoy». Cada tarjeta: etiqueta pequeña en mayúsculas, número grande y una línea secundaria.
+- **«Así funciona»** (bajo el resumen): recorrido guiado con los pasos del ciclo — agendar, recordatorio, respuesta del paciente, ver estado — cada paso con un enlace a su vista.
 - **Requieren atención** debajo: filas con barra de 4 px en el tono del estado.
 - **Agenda** debajo, agrupada por día con encabezados fijos («Hoy», «Mañana», «Lunes 3 de noviembre»).
 - Cada cita es una **fila de lista**, no una tarjeta: hora (grande, tabular) · nombre y dato secundario · etiqueta de estado. En pantallas estrechas la etiqueta baja bajo el nombre.

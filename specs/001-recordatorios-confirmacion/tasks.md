@@ -85,3 +85,10 @@ Una tarea a la vez, en orden. Cada una termina con sus tests en verde (constituc
       Hecho cuando: tests de crear, mover y cancelar una cita ficticia en la
       agenda simulada y su efecto en el panel y los recordatorios, en verde; y
       rutas `/agenda*` ausentes en modo real.
+- [x] T21. Navegación y flujo guiado del demo: barra lateral (escritorio) y
+      barra inferior (celular) con Panel/Agenda/Simulador, cabecera azul, y
+      recorrido guiado «Así funciona» en el panel con enlaces a cada vista.
+      (CA-6)
+      Hecho cuando: navegación visible en las tres vistas a 360 px y en
+      escritorio con el ítem activo en azul, flujo guiado enlazando a Agenda y
+      Simulador, y tests en verde.

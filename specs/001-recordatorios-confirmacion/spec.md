@@ -122,6 +122,12 @@ El proyecto debe poder ejecutarse sin credenciales (ver constitución, principio
   citas ficticias. Al crearlas aparecen en el panel y programan sus
   recordatorios; al moverlas se descartan los pendientes y el ciclo se
   reinicia; al cancelarlas no se envían más recordatorios (RF-3).
+- Las tres vistas del modo demo (panel, agenda simulada y simulador) se enlazan
+  con una **navegación fija**: barra lateral en escritorio y barra inferior en
+  celular.
+- El panel muestra un recorrido guiado **«Así funciona»** con los pasos del
+  ciclo (agendar → recordatorio → respuesta → estado) y enlaces a cada vista,
+  para que la demo demuestre el valor de un vistazo.
 
 ## 5. Requisitos funcionales (EARS)
 

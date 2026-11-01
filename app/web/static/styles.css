@@ -41,6 +41,7 @@ body {
   color: var(--tinta);
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
+  padding-bottom: 72px;
 }
 
 /* Cabecera fija */
@@ -54,8 +55,7 @@ body {
   gap: var(--e-3);
   min-height: var(--alto-cabecera);
   padding: var(--e-2) var(--e-4);
-  background: var(--superficie);
-  border-bottom: 1px solid var(--borde);
+  background: var(--acento);
 }
 
 .marca {
@@ -67,13 +67,14 @@ body {
 
 .logo-diente {
   flex: none;
-  color: var(--acento);
+  color: var(--superficie);
 }
 
 .marca-nombre {
   font-size: var(--t-18);
   font-weight: 700;
   line-height: 1.2;
+  color: var(--superficie);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -83,8 +84,8 @@ body {
   flex: none;
   font-size: var(--t-14);
   font-weight: 700;
-  color: var(--atencion-texto);
-  background: var(--atencion-fondo);
+  color: var(--superficie);
+  background: color-mix(in srgb, var(--superficie) 18%, transparent);
   padding: var(--e-1) var(--e-2);
   border-radius: var(--radio-control);
 }
@@ -96,6 +97,67 @@ body {
   text-decoration: none;
 }
 .volver:hover { text-decoration: underline; }
+
+/* Navegación: barra lateral (escritorio) y barra inferior (celular) */
+.sidebar { display: none; }
+
+.sidebar-marca {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  color: var(--superficie);
+  text-decoration: none;
+  font-size: var(--t-18);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-height: var(--objetivo-tactil);
+  padding: 0 var(--e-3);
+  border-radius: var(--radio-control);
+  color: var(--superficie);
+  text-decoration: none;
+  font-size: var(--t-16);
+  font-weight: 700;
+}
+.nav-item:hover { background: color-mix(in srgb, var(--superficie) 14%, transparent); }
+.nav-item.activo { background: var(--superficie); color: var(--acento); }
+
+.nav-inferior {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  background: var(--superficie);
+  border-top: 1px solid var(--borde);
+}
+
+.nav-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: 60px;
+  color: var(--pizarra);
+  text-decoration: none;
+  font-size: var(--t-14);
+  font-weight: 700;
+}
+.nav-tab.activo { color: var(--acento); }
 
 /* Panel */
 .panel {
@@ -112,6 +174,53 @@ body {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--e-2);
+}
+
+/* Recorrido guiado «Así funciona» */
+.pasos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-2);
+}
+
+.paso {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  padding: var(--e-3) var(--e-4);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-superficie);
+  flex-wrap: wrap;
+}
+
+.paso-numero {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--acento);
+  color: var(--superficie);
+  font-size: var(--t-14);
+  font-weight: 700;
+}
+
+.paso-texto {
+  flex: 1 1 12rem;
+  min-width: 0;
+  font-size: var(--t-16);
+}
+
+.boton-chico {
+  min-height: 36px;
+  padding: 0 var(--e-3);
+  font-size: var(--t-14);
 }
 
 .tarjeta {
@@ -432,7 +541,7 @@ input:focus-visible {
 .login .boton { width: 100%; }
 
 /* Agenda simulada */
-.agenda-subtitulo {
+.subtitulo {
   color: var(--pizarra);
   font-size: var(--t-16);
   margin: 0;
@@ -494,6 +603,27 @@ input:focus-visible {
   .panel { padding: var(--e-3); }
   .tarjeta-numero { font-size: var(--t-24); }
   .tarjeta { padding: var(--e-2); }
+}
+
+/* Escritorio: barra lateral en lugar de cabecera y barra inferior */
+@media (min-width: 768px) {
+  body { padding-bottom: 0; }
+  .cabecera { display: none; }
+  .nav-inferior { display: none; }
+  .sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 232px;
+    background: var(--acento);
+    padding: var(--e-4) var(--e-3);
+    gap: var(--e-6);
+  }
+  .panel { margin-left: 232px; }
+  .dia { top: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

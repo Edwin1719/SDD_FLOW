@@ -10,20 +10,13 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header class="cabecera">
-    <div class="marca">
-      <svg class="logo-diente" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.2-4.2-1.1-5.8.3C4.6 6.5 4 9.5 4 12c0 2.8.5 6.2 1.5 7.6.6.9 1.8 1.3 2.7.7.8-.4 1.1-1.2 1.1-2 0-1 .4-1.9 1.1-2.6.6-.6 1.5-.6 2.1 0 .7.7 1.1 1.6 1.1 2.6 0 .8.3 1.6 1.1 2 .9.6 2.1.2 2.7-.7 1-1.4 1.5-4.8 1.5-7.6 0-2.5-.6-5.5-2.2-7.2-1.6-1.4-4-1.5-5.8-.3z"/></svg>
-      <span class="marca-nombre">Consultorio de la Dra. Laura</span>
-    </div>
-    <span class="demo-badge">Demo · datos ficticios</span>
-  </header>
+  {% set active = 'sim' %}
+  {% include '_navegacion.html' %}
 
   <main class="panel">
-    <div class="sim-cabecera">
-      <h1 class="titulo-pagina">Simulador</h1>
-      <a class="volver" href="/">Volver al panel</a>
-    </div>
+    <h1 class="titulo-pagina">Simulador</h1>
     <p class="sim-ahora">Ahora: {{ now }}</p>
+    <p class="subtitulo">Adelanta el reloj para disparar los recordatorios y responde como paciente; el estado cambia en el Panel.</p>
 
     <section class="seccion">
       <h2 class="titulo">Controles</h2>
