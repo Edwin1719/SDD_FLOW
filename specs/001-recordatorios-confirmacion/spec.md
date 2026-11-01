@@ -91,13 +91,18 @@ Neutros, sin detalles clínicos. Los textos exactos son:
 
 1. **Resumen** (arriba): tres cifras de un vistazo — citas de hoy, citas que
    requieren atención y citas confirmadas hoy.
-2. **Requieren atención**: citas en estado Reprogramación solicitada,
+2. **Agenda semanal** (calendario): los días de la semana en columnas y las
+   horas (8:00 a 20:00) en filas; cada cita es una tarjeta en su día y hora,
+   con hora, nombre del paciente y estado visible con color y texto. En
+   celular la grilla se desliza horizontalmente.
+3. **Requieren atención** (debajo): citas en estado Reprogramación solicitada,
    Cancelada por paciente (espacio liberado), Sin confirmar, Error de envío y
    Sin teléfono.
-3. **Agenda**: citas de hoy y de los próximos días, agrupadas por día con
-   encabezados fijos y fecha en español («Hoy», «Mañana», «Lunes 3 de
-   noviembre»), cada una con su hora, nombre del paciente y estado visible con
-   color y texto.
+
+En modo demo, al **seleccionar una tarjeta** aparece una barra de acciones
+arriba con **Confirmo, Reprogramar, Cancelar y BAJA**, que simulan la respuesta
+del paciente y actualizan el estado al instante (misma lógica del simulador).
+En modo real, el paciente responde por WhatsApp y esta barra no existe.
 
 El panel aplica de forma completa la identidad visual de la skill
 `brand-design`: tipografía cargada, superficies y filas con la jerarquía

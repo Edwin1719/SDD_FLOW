@@ -72,13 +72,13 @@ Una tarea a la vez, en orden. Cada una termina con sus tests en verde (constituc
       Pruebas reales (`MODE=real`): requiere Google (`calendar.events.readonly`, quizá verificación OAuth) + Meta (WhatsApp Business y plantillas `reminder_48h`/`reminder_24h` aprobadas con 3 botones); credenciales GOOGLE_*/WHATSAPP_* en variables de entorno.
       Verificar contra el problema del cliente: (1) recordatorios salen a 48 h y 24 h; (2) confirmar/cancelar/reprogramar con un toque; (3) la asistente ve cancelaciones, reprogramaciones y fallos en «Requieren atención»; (4) inasistencia de ~30 % a <10 % (métrica posterior con la doctora).
       Hecho cuando: la URL abre el panel con el banner DEMO y el flujo funciona, y en `MODE=real` se comprueba en tiempo real que resuelve los problemas del cliente.
-- [x] T19. Rediseño visual: aplicar la identidad actualizada de `brand-design`
-      (paleta blanco/azul, logo de diente en la cabecera, tarjetas de resumen
-      KPI, filas con jerarquía, fechas en español, controles estilizados y foco
-      visible) al panel y al simulador. (RF-17, CA-6)
-      Hecho cuando: tests del panel y del simulador en verde (texto, tono y
-      estructura) y revisión visual a 360 px sin controles por defecto del
-      navegador.
+- [x] T19. Rediseño visual: identidad actualizada de `brand-design` (paleta
+      blanco/azul, logo de diente, cabecera, tarjetas de resumen KPI, controles
+      estilizados y foco visible) y agenda semanal tipo calendario (días en
+      columnas, horas en filas, citas como tarjetas) con barra de acciones
+      Confirmo/Reprogramar/Cancelar/BAJA al seleccionar una tarjeta. (RF-17, CA-6)
+      Hecho cuando: tests del panel y del simulador en verde y revisión visual a
+      360 px (grilla con scroll horizontal) y escritorio sin desbordamiento.
 - [x] T20. Agenda simulada interactiva: `FakeCalendar` con crear/mover/cancelar,
       rutas demo `/agenda` y disparo de sincronización al editar. (RF-3, RF-4,
       RF-6, CA-7)

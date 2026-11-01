@@ -86,6 +86,33 @@ def reply(
     return RedirectResponse("/sim", status_code=303)
 
 
+@router.post("/panel/reply")
+def panel_reply(
+    request: Request,
+    appointment_id: int = Form(...),
+    starts_at: str = Form(...),
+    action: str = Form(...),
+):
+    repo = request.app.state.repo
+    messaging = request.app.state.messaging
+    clock = request.app.state.clock
+    original_starts_at = datetime.fromisoformat(starts_at)
+    received_at = clock.now()
+
+    if action == "optout":
+        apply_optout(repo, appointment_id=appointment_id, received_at=received_at)
+    else:
+        apply_button_reply(
+            repo,
+            messaging,
+            appointment_id=appointment_id,
+            action=ReplyAction(action),
+            original_starts_at=original_starts_at,
+            received_at=received_at,
+        )
+    return RedirectResponse("/", status_code=303)
+
+
 @router.post("/sim/clock/advance")
 def advance(request: Request, hours: int = Form(...)):
     request.app.state.clock.advance(hours=hours)

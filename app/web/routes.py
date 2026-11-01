@@ -9,7 +9,7 @@ from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.texts_es import ATTENTION_TITLE, AGENDA_TITLE, EMPTY_STATE, STATE_LABELS
+from app.texts_es import ATTENTION_TITLE, EMPTY_STATE, STATE_LABELS
 from app.web.auth import SESSION_COOKIE, make_token, verify_token
 
 router = APIRouter()
@@ -80,17 +80,33 @@ def panel(request: Request):
     today_start = datetime.combine(local_today, time.min, tzinfo=clinic_tz)
     today_start_utc = today_start.astimezone(timezone.utc)
 
+    rows = list(repo.list_upcoming_appointments(today_start_utc))
+
     attention: list[dict] = []
-    days: dict = {}
     citas_hoy = 0
     confirmadas_hoy = 0
-    for row in repo.list_upcoming_appointments(today_start_utc):
+
+    dias: list[str] = []
+    for i in range(7):
+        d = local_today + timedelta(days=i)
+        if i == 0:
+            dias.append("Hoy")
+        elif i == 1:
+            dias.append("Mañana")
+        else:
+            dias.append(f"{DIAS_SEMANA[d.weekday()][:3].capitalize()} {d.day}")
+
+    horas = [f"{h:02d}:00" for h in range(8, 21)]  # 8:00 a 20:00
+    celdas: list[list[list[dict]]] = [[[] for _ in range(7)] for _ in range(len(horas))]
+
+    for row in rows:
         local = datetime.fromisoformat(row["starts_at"]).astimezone(clinic_tz)
         status = row["status"]
         if local.date() == local_today:
             citas_hoy += 1
             if status == "confirmed":
                 confirmadas_hoy += 1
+
         view = {
             "time": local.strftime("%H:%M"),
             "name": row["patient_name"],
@@ -100,12 +116,17 @@ def panel(request: Request):
         }
         if status in ATTENTION_STATES:
             attention.append(view)
-        days.setdefault(local.date(), []).append(view)
 
-    agenda = [
-        {"label": dia_legible(day, local_today), "appointments": items}
-        for day, items in sorted(days.items())
-    ]
+        day_index = (local.date() - local_today).days
+        if 0 <= day_index < 7:
+            hour_index = max(0, min(local.hour - 8, len(horas) - 1))
+            celdas[hour_index][day_index].append(
+                {
+                    **view,
+                    "appointment_id": row["id"],
+                    "starts_at": row["starts_at"],
+                }
+            )
 
     resumen = [
         {"etiqueta": "Citas hoy", "numero": citas_hoy, "secundaria": "en la agenda"},
@@ -118,11 +139,13 @@ def panel(request: Request):
         name="panel.html",
         context={
             "attention_title": ATTENTION_TITLE,
-            "agenda_title": AGENDA_TITLE,
             "empty_state": EMPTY_STATE,
             "attention": attention,
             "resumen": resumen,
-            "agenda": agenda,
+            "dias": dias,
+            "horas": horas,
+            "celdas": celdas,
+            "empty": len(rows) == 0,
             "demo": request.app.state.mode == "demo",
         },
     )

@@ -40,6 +40,28 @@ def test_reply_as_patient(tmp_path):
     repo.close()
 
 
+def test_panel_reply_applies_and_redirects(tmp_path):
+    app = create_app(_config(tmp_path))
+    repo = app.state.repo
+    client = TestClient(app)
+    appointment = repo.get_appointment("evt-1")
+
+    response = client.post(
+        "/panel/reply",
+        data={
+            "appointment_id": str(appointment["id"]),
+            "starts_at": appointment["starts_at"],
+            "action": "confirm",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/"
+    assert repo.get_appointment("evt-1")["status"] == "confirmed"
+    repo.close()
+
+
 def test_clock_advance_triggers_reminders(tmp_path):
     app = create_app(_config(tmp_path))
     repo = app.state.repo

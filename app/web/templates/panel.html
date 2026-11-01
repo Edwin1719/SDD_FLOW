@@ -25,28 +25,48 @@
     </section>
 
     <section class="seccion">
-      <h2 class="titulo">Así funciona</h2>
-      <ol class="pasos">
-        <li class="paso">
-          <span class="paso-numero">1</span>
-          <span class="paso-texto">Agenda una cita en el calendario simulado.</span>
-          <a class="boton boton-chico" href="/agenda">Ir a la Agenda</a>
-        </li>
-        <li class="paso">
-          <span class="paso-numero">2</span>
-          <span class="paso-texto">Adelanta el reloj para ver los recordatorios de 48 h y 24 h.</span>
-          <a class="boton boton-chico" href="/sim">Ir al Simulador</a>
-        </li>
-        <li class="paso">
-          <span class="paso-numero">3</span>
-          <span class="paso-texto">Responde como paciente: confirma, reprograma o cancela.</span>
-          <a class="boton boton-chico" href="/sim">Responder como paciente</a>
-        </li>
-        <li class="paso">
-          <span class="paso-numero">4</span>
-          <span class="paso-texto">Ve el estado de cada cita aquí, en el Panel.</span>
-        </li>
-      </ol>
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Agenda de la semana</h2>
+      </div>
+
+      {% if demo %}
+      <form id="form-acciones" class="barra-acciones" method="post" action="/panel/reply" hidden>
+        <span class="barra-acciones-info">Responder como paciente: <strong id="accion-paciente"></strong></span>
+        <input type="hidden" name="appointment_id" id="accion-id">
+        <input type="hidden" name="starts_at" id="accion-starts-at">
+        <div class="grupo-botones">
+          <button class="boton" name="action" value="confirm">Confirmo</button>
+          <button class="boton-secundario" name="action" value="reschedule">Reprogramar</button>
+          <button class="boton-secundario" name="action" value="cancel">Cancelar</button>
+          <button class="boton-secundario" name="action" value="optout">BAJA</button>
+        </div>
+      </form>
+      {% endif %}
+
+      <div class="calendario">
+        <div class="calendario-inner">
+          <div class="calendario-esquina"></div>
+          {% for d in dias %}<div class="calendario-dia">{{ d }}</div>{% endfor %}
+          {% for hi in range(horas|length) %}
+            <div class="calendario-hora">{{ horas[hi] }}</div>
+            {% for di in range(7) %}
+            <div class="calendario-celda">
+              {% for c in celdas[hi][di] %}
+              <button type="button" class="tarjeta-cita tarjeta-{{ c.tone }}" data-id="{{ c.appointment_id }}" data-starts-at="{{ c.starts_at }}">
+                <span class="tarjeta-cita-hora">{{ c.time }}</span>
+                <span class="tarjeta-cita-nombre">{{ c.name }}</span>
+                <span class="tarjeta-cita-estado">{{ c.symbol }} {{ c.label }}</span>
+              </button>
+              {% endfor %}
+            </div>
+            {% endfor %}
+          {% endfor %}
+        </div>
+      </div>
+
+      {% if empty %}
+      <p class="vacio">{{ empty_state }}</p>
+      {% endif %}
     </section>
 
     {% if attention %}
@@ -69,24 +89,52 @@
     {% endif %}
 
     <section class="seccion">
-      <h2 class="titulo">{{ agenda_title }}</h2>
-      {% if agenda %}
-        {% for dia in agenda %}
-        <h3 class="dia">{{ dia.label }}</h3>
-        <ul class="lista">
-          {% for cita in dia.appointments %}
-          <li class="fila">
-            <span class="hora">{{ cita.time }}</span>
-            <span class="nombre">{{ cita.name }}</span>
-            <span class="estado estado-{{ cita.tone }}">{{ cita.symbol }} {{ cita.label }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-        {% endfor %}
-      {% else %}
-        <p class="vacio">{{ empty_state }}</p>
-      {% endif %}
+      <h2 class="titulo">Así funciona</h2>
+      <ol class="pasos">
+        <li class="paso">
+          <span class="paso-numero">1</span>
+          <span class="paso-texto">Agenda una cita en el calendario simulado.</span>
+          <a class="boton boton-chico" href="/agenda">Ir a la Agenda</a>
+        </li>
+        <li class="paso">
+          <span class="paso-numero">2</span>
+          <span class="paso-texto">Adelanta el reloj para ver los recordatorios de 48 h y 24 h.</span>
+          <a class="boton boton-chico" href="/sim">Ir al Simulador</a>
+        </li>
+        <li class="paso">
+          <span class="paso-numero">3</span>
+          <span class="paso-texto">Toca una tarjeta del calendario y responde como paciente.</span>
+        </li>
+        <li class="paso">
+          <span class="paso-numero">4</span>
+          <span class="paso-texto">Ve el estado de cada cita actualizado aquí, en el Panel.</span>
+        </li>
+      </ol>
     </section>
   </main>
+
+  {% if demo %}
+  <script>
+  (function () {
+    var form = document.getElementById('form-acciones');
+    if (!form) return;
+    var idInput = document.getElementById('accion-id');
+    var startsInput = document.getElementById('accion-starts-at');
+    var nombre = document.getElementById('accion-paciente');
+    var cards = document.querySelectorAll('.tarjeta-cita');
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        cards.forEach(function (c) { c.classList.remove('seleccionada'); });
+        card.classList.add('seleccionada');
+        idInput.value = card.dataset.id;
+        startsInput.value = card.dataset.startsAt;
+        nombre.textContent = card.querySelector('.tarjeta-cita-nombre').textContent;
+        form.hidden = false;
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+  })();
+  </script>
+  {% endif %}
 </body>
 </html>

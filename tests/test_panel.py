@@ -57,7 +57,7 @@ def test_panel_renders_every_state_with_text_and_tone(tmp_path):
     html = response.text
     for _status, label, tone in STATES:
         assert label in html
-        assert f"estado-{tone}" in html
+        assert f"estado-{tone}" in html or f"tarjeta-{tone}" in html
     repo.close()
 
 
