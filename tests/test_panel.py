@@ -69,3 +69,23 @@ def test_panel_empty_state(tmp_path):
     assert response.status_code == 200
     assert "Hoy no hay citas." in response.text
     repo.close()
+
+def test_panel_uses_rows_not_week_grid(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    future = datetime.now(UTC) + timedelta(days=1)
+    repo.create_appointment(
+        event_id="evt-1",
+        patient_name="Paciente",
+        phone="+573001234567",
+        starts_at=future,
+        status="pending",
+        updated_at=datetime.now(UTC),
+    )
+    client = TestClient(_make_app(repo))
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert 'class="calendario"' not in response.text
+    assert "fila-cita" in response.text
+    assert "<h1" in response.text
+    repo.close()

@@ -137,3 +137,45 @@ def test_skips_opted_out_patient(tmp_path):
     assert repo.list_reminders(appointment["id"])[0]["state"] == "skipped"
     assert messaging.messages == []
     repo.close()
+
+def test_message_body_uses_spec_text(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    messaging = SimulatedMessaging()
+    _seed(repo, has_consent=True)
+
+    dispatch_due_reminders(repo, messaging, now=NOW)
+
+    assert len(messaging.messages) == 1
+    body = messaging.messages[0][1]
+    assert body == (
+        "Hola Paciente, te recordamos tu cita en el consultorio de la Dra. Laura "
+        "el martes 10 de noviembre a las 12:00. ¿Nos confirmas?"
+    )
+    repo.close()
+
+
+def test_stale_reminder_is_skipped(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    messaging = SimulatedMessaging()
+    phone = "+573001234567"
+    repo.upsert_patient(phone, has_consent=True)
+    appointment_id = repo.create_appointment(
+        event_id="evt-1",
+        patient_name="Paciente",
+        phone=phone,
+        starts_at=NOW - timedelta(hours=1),
+        status="pending",
+        updated_at=NOW - timedelta(days=1),
+    )
+    repo.create_reminder(
+        appointment_id=appointment_id,
+        kind="R2",
+        starts_at_snapshot=NOW - timedelta(hours=1),
+        scheduled_for=NOW,
+    )
+
+    dispatch_due_reminders(repo, messaging, now=NOW)
+
+    assert messaging.messages == []
+    assert repo.list_reminders(appointment_id)[0]["state"] == "skipped"
+    repo.close()

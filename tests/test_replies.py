@@ -177,3 +177,49 @@ def test_reply_to_changed_date_ignored(tmp_path):
     assert repo.list_replies(appointment_id)[0]["applied"] == 0
     assert messaging.messages == []
     repo.close()
+
+def test_no_auto_reply_without_consent(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    messaging = SimulatedMessaging()
+    repo.upsert_patient(PHONE, has_consent=False)
+    appointment_id = repo.create_appointment(
+        event_id="evt-1",
+        patient_name="Paciente",
+        phone=PHONE,
+        starts_at=STARTS_AT,
+        status="reminder_sent",
+        updated_at=BEFORE,
+    )
+
+    apply_button_reply(
+        repo,
+        messaging,
+        appointment_id=appointment_id,
+        action=ReplyAction.CONFIRM,
+        original_starts_at=STARTS_AT,
+        received_at=BEFORE,
+    )
+
+    assert repo.get_appointment_by_id(appointment_id)["status"] == "confirmed"
+    assert messaging.messages == []
+    repo.close()
+
+
+def test_no_auto_reply_after_optout(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    messaging = SimulatedMessaging()
+    appointment_id = _seed_appointment(repo)
+
+    apply_optout(repo, appointment_id=appointment_id, received_at=BEFORE)
+    apply_button_reply(
+        repo,
+        messaging,
+        appointment_id=appointment_id,
+        action=ReplyAction.CONFIRM,
+        original_starts_at=STARTS_AT,
+        received_at=BEFORE,
+    )
+
+    assert repo.get_appointment_by_id(appointment_id)["status"] == "confirmed"
+    assert messaging.messages == []
+    repo.close()

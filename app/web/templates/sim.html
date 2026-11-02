@@ -27,6 +27,9 @@
         </label>
         <button class="boton" type="submit">Adelantar</button>
       </form>
+      {% if fallo %}
+      <p class="aviso" role="status">Fallo armado: el próximo envío fallará. Pulsa de nuevo antes de cada reintento si quieres ver «Error de envío».</p>
+      {% endif %}
       <div class="grupo-botones">
         <form method="post" action="/sim/fail-next-send">
           <button class="boton-secundario" type="submit">Forzar fallo de envío</button>
@@ -46,6 +49,7 @@
             <span class="nombre">{{ cita.patient_name }}</span>
             <span class="estado estado-{{ cita.tone }}">{{ cita.symbol }} {{ cita.status_label }}</span>
           </div>
+          {% if cita.can_reply %}
           <form class="grupo-botones" method="post" action="/sim/reply">
             <input type="hidden" name="appointment_id" value="{{ cita.id }}">
             <input type="hidden" name="starts_at" value="{{ cita.starts_at }}">
@@ -54,6 +58,9 @@
             <button class="boton-secundario" name="action" value="cancel">Cancelar</button>
             <button class="boton-secundario" name="action" value="optout">BAJA</button>
           </form>
+          {% else %}
+          <p class="nota">{{ cita.reason }}</p>
+          {% endif %}
         </li>
         {% endfor %}
       </ul>
@@ -65,7 +72,7 @@
       <ul class="conversacion">
         {% for m in messages %}
         <li class="burbuja">
-          <span class="burbuja-meta">Para {{ m.to }}</span>
+          <span class="burbuja-meta">Para {{ m.name }}</span>
           <span class="burbuja-texto">{{ m.body }}</span>
         </li>
         {% endfor %}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agenda simulada — Demo</title>
+  <title>Agenda — Consultorio de la Dra. Laura</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
@@ -11,66 +11,133 @@
 </head>
 <body>
   {% set active = 'agenda' %}
-  {% set demo = True %}
   {% include '_navegacion.html' %}
 
   <main class="panel">
-    <h1 class="titulo-pagina">Agenda</h1>
-    <p class="subtitulo">Calendario simulado: representa Google Calendar, la fuente de verdad de las citas.</p>
+    <header class="pagina-cabecera">
+      <h1 class="titulo-pagina">Agenda</h1>
+      <p class="subtitulo">Calendario simulado: representa Google Calendar, la fuente de verdad de las citas.</p>
+    </header>
 
     <section class="seccion">
-      <h2 class="titulo">Nueva cita</h2>
-      <form class="nueva-cita" method="post" action="/agenda/create">
-        <label>Nombre del paciente
-          <input class="campo" type="text" name="patient_name" required>
-        </label>
-        <label>Teléfono (con código de país)
-          <input class="campo" type="tel" name="phone" placeholder="+57 300 123 4567">
-        </label>
-        <div class="formulario">
-          <label>Fecha
-            <input class="campo" type="date" name="date" required>
+      <nav class="franja-dias" aria-label="Días de la semana">
+        {% for d in days %}
+        <a class="dia-opcion {% if d.active %}activo{% endif %}" href="/agenda?date={{ d.date }}">{{ d.label }}</a>
+        {% endfor %}
+      </nav>
+
+      <div class="seccion-cabecera">
+        <h2 class="titulo">{{ selected_label }}</h2>
+      </div>
+
+      {% if error %}
+      <p class="mensaje-error">{{ error }}</p>
+      {% endif %}
+
+      {% if edit_event %}
+      <section class="edicion" id="editar" aria-label="Editar cita">
+        <h3 class="subtitulo-fuerte">Editar cita</h3>
+        <form class="formulario-edicion" method="post" action="/agenda/edit">
+          <input type="hidden" name="appointment_id" value="{{ edit_event.appointment_id }}">
+          <label>Nombre del paciente
+            <input class="campo" type="text" name="patient_name" value="{{ edit_event.patient_name }}" required>
           </label>
-          <label>Hora
-            <input class="campo" type="time" name="time" required>
+          <label>Teléfono (con código de país)
+            <input class="campo" type="tel" name="phone" value="{{ edit_event.phone }}" placeholder="+57 300 123 4567">
           </label>
-        </div>
-        <button class="boton" type="submit">Agregar cita</button>
-      </form>
+          <label class="check">
+            <input type="checkbox" name="consent" value="1" {% if edit_event.has_consent %}checked{% endif %}>
+            El paciente ya dio su consentimiento
+          </label>
+          <div class="formulario">
+            <label>Fecha
+              <input class="campo" type="date" name="date" value="{{ edit_event.date }}" required>
+            </label>
+            <label>Hora
+              <input class="campo" type="time" name="time" value="{{ edit_event.time }}" required>
+            </label>
+          </div>
+          <div class="grupo-botones">
+            <button class="boton" type="submit">Guardar cambios</button>
+            <a class="boton-secundario boton" href="/agenda?date={{ selected_date }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+      {% if events %}
+      <ul class="lista">
+        {% for e in events %}
+        <li class="fila fila-cita">
+          <span class="hora">{{ e.time }}</span>
+          <div class="fila-texto">
+            <span class="nombre">{{ e.name }}</span>
+            <span class="detalle">{{ e.phone_label }}</span>
+          </div>
+          <span class="estado estado-{{ e.tone }}">{{ e.symbol }} {{ e.label }}</span>
+          <div class="fila-acciones">
+            {% if e.appointment_id %}
+            <a class="boton-secundario boton-chico" href="/agenda?date={{ selected_date }}&edit={{ e.appointment_id }}#editar">Editar</a>
+            {% endif %}
+            <form method="post" action="/agenda/cancel">
+              <input type="hidden" name="event_id" value="{{ e.event_id }}">
+              <button class="boton-secundario boton-chico" type="submit">Cancelar</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% elif not out_of_hours %}
+      <p class="vacio">No hay citas este día.</p>
+      {% endif %}
+
+      {% if out_of_hours %}
+      <h3 class="subtitulo-fuerte">Fuera de horario</h3>
+      <ul class="lista">
+        {% for e in out_of_hours %}
+        <li class="fila fila-cita fila-fuera">
+          <span class="hora">{{ e.time }}</span>
+          <div class="fila-texto">
+            <span class="nombre">{{ e.name }}</span>
+            <span class="detalle">{{ e.phone_label }} · fuera de 8:00–20:00</span>
+          </div>
+          <span class="estado estado-{{ e.tone }}">{{ e.symbol }} {{ e.label }}</span>
+          <div class="fila-acciones">
+            {% if e.appointment_id %}
+            <a class="boton-secundario boton-chico" href="/agenda?date={{ selected_date }}&edit={{ e.appointment_id }}#editar">Editar</a>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
     </section>
 
     <section class="seccion">
-      <h2 class="titulo">Citas del calendario</h2>
-      {% if agenda %}
-        {% for dia in agenda %}
-        <h3 class="dia">{{ dia.label }}</h3>
-        <ul class="lista">
-          {% for e in dia.events %}
-          <li class="evento">
-            <div class="evento-cabecera">
-              <span class="hora">{{ e.time }}</span>
-              <span class="nombre">{{ e.patient_name }}</span>
-              <span class="evento-telefono">{{ e.phone }}</span>
-            </div>
-            <div class="evento-acciones">
-              <form class="formulario" method="post" action="/agenda/move">
-                <input type="hidden" name="event_id" value="{{ e.event_id }}">
-                <input class="campo" type="date" name="date" value="{{ e.local_date }}" required>
-                <input class="campo" type="time" name="time" value="{{ e.local_time }}" required>
-                <button class="boton-secundario" type="submit">Mover</button>
-              </form>
-              <form method="post" action="/agenda/cancel">
-                <input type="hidden" name="event_id" value="{{ e.event_id }}">
-                <button class="boton-secundario" type="submit">Cancelar</button>
-              </form>
-            </div>
-          </li>
-          {% endfor %}
-        </ul>
-        {% endfor %}
-      {% else %}
-        <p class="vacio">No hay citas en el calendario.</p>
-      {% endif %}
+      <details class="nueva-cita" {% if empty %}open{% endif %}>
+        <summary>Nueva cita</summary>
+        <form class="formulario-edicion" method="post" action="/agenda/create">
+          <label>Nombre del paciente
+            <input class="campo" type="text" name="patient_name" required>
+          </label>
+          <label>Teléfono (con código de país)
+            <input class="campo" type="tel" name="phone" placeholder="+57 300 123 4567">
+          </label>
+          <label class="check">
+            <input type="checkbox" name="consent" value="1">
+            El paciente ya dio su consentimiento
+          </label>
+          <div class="formulario">
+            <label>Fecha
+              <input class="campo" type="date" name="date" value="{{ selected_date }}" required>
+            </label>
+            <label>Hora
+              <input class="campo" type="time" name="time" required>
+            </label>
+          </div>
+          <button class="boton" type="submit">Agregar cita</button>
+        </form>
+      </details>
     </section>
   </main>
 </body>

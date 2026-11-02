@@ -45,7 +45,7 @@ class Config:
         return cls(
             mode=env.get("MODE", "demo"),
             database_path=env.get("DATABASE_PATH", "data/recordatorios.db"),
-            clinic_timezone=env.get("CLINIC_TIMEZONE", ""),
+            clinic_timezone=env.get("CLINIC_TIMEZONE", "America/Bogota"),
             send_window_start=int(env.get("SEND_WINDOW_START", "8")),
             send_window_end=int(env.get("SEND_WINDOW_END", "20")),
             sync_interval_minutes=int(env.get("SYNC_INTERVAL_MINUTES", "5")),

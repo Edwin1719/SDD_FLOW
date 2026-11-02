@@ -4,6 +4,7 @@ uvicorn
 jinja2
 python-multipart
 httpx
+tzdata
 
 # Desarrollo y pruebas
 pytest

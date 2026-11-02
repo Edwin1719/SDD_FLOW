@@ -32,14 +32,10 @@ def sync_calendar(
     event_ids = {event.event_id for event in events}
 
     for event in events:
-        status = (
-            AppointmentStatus.NO_PHONE
-            if event.phone is None
-            else AppointmentStatus.PENDING
-        )
         existing = repo.get_appointment(event.event_id)
 
         if existing is None:
+            status = _status_for(event, repo)
             appointment_id = repo.create_appointment(
                 event_id=event.event_id,
                 patient_name=event.patient_name,
@@ -48,22 +44,43 @@ def sync_calendar(
                 status=status.value,
                 updated_at=now,
             )
+            should_schedule = True
         else:
             appointment_id = existing["id"]
             stored_starts = datetime.fromisoformat(existing["starts_at"])
-            if stored_starts != event.starts_at:
-                # Movida (RF-3): descartar pendientes y reiniciar en Pendiente.
-                repo.skip_pending_reminders(appointment_id)
-                repo.update_appointment(
-                    appointment_id,
-                    starts_at=event.starts_at,
-                    status=status.value,
-                    updated_at=now,
-                )
-            else:
+            time_changed = stored_starts != event.starts_at
+            name_changed = existing["patient_name"] != event.patient_name
+            phone_changed = existing["phone"] != event.phone
+
+            if not (time_changed or name_changed or phone_changed):
                 continue  # sin cambios
 
-        if event.phone is not None:
+            status = existing["status"]
+            if time_changed:
+                # Movida (RF-3): descartar pendientes y reiniciar el ciclo.
+                repo.skip_pending_reminders(appointment_id)
+                status = _status_for(event, repo).value
+            elif phone_changed:
+                if event.phone is None:
+                    status = AppointmentStatus.NO_PHONE.value
+                    repo.skip_pending_reminders(appointment_id)
+                elif existing["phone"] is None:
+                    # Apareció un teléfono válido (RF-2, RF-18).
+                    status = _status_for(event, repo).value
+
+            should_schedule = time_changed or (
+                phone_changed and existing["phone"] is None
+            )
+            repo.update_appointment_details(
+                appointment_id,
+                patient_name=event.patient_name,
+                phone=event.phone,
+                starts_at=event.starts_at,
+                status=status,
+                updated_at=now,
+            )
+
+        if event.phone is not None and should_schedule:
             _schedule_reminders(
                 repo,
                 appointment_id,
@@ -78,6 +95,16 @@ def sync_calendar(
     for appointment in repo.list_appointments():
         if appointment["event_id"] not in event_ids:
             repo.delete_appointment(appointment["id"])
+
+
+def _status_for(event, repo: Repository) -> AppointmentStatus:
+    """Estado inicial de una cita según teléfono y consentimiento (RF-2, RF-8)."""
+    if event.phone is None:
+        return AppointmentStatus.NO_PHONE
+    patient = repo.get_patient(event.phone)
+    if patient is None or not patient["has_consent"]:
+        return AppointmentStatus.NO_CONSENT
+    return AppointmentStatus.PENDING
 
 
 def _schedule_reminders(

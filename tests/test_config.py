@@ -16,7 +16,7 @@ def test_config_uses_demo_mode_by_default():
 def test_config_applies_defaults():
     config = Config.from_env({})
     assert config.database_path == "data/recordatorios.db"
-    assert config.clinic_timezone == ""
+    assert config.clinic_timezone == "America/Bogota"
     assert config.send_window_start == 8
     assert config.send_window_end == 20
     assert config.sync_interval_minutes == 5

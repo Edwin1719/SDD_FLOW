@@ -2,6 +2,57 @@
 
 from __future__ import annotations
 
+from datetime import date, datetime, tzinfo
+
+DIAS_SEMANA = [
+    "lunes",
+    "martes",
+    "miércoles",
+    "jueves",
+    "viernes",
+    "sábado",
+    "domingo",
+]
+MESES = [
+    "enero",
+    "febrero",
+    "marzo",
+    "abril",
+    "mayo",
+    "junio",
+    "julio",
+    "agosto",
+    "septiembre",
+    "octubre",
+    "noviembre",
+    "diciembre",
+]
+
+
+def fecha_larga(d: date) -> str:
+    """Fecha en español: «Lunes 3 de noviembre»."""
+    return f"{DIAS_SEMANA[d.weekday()].capitalize()} {d.day} de {MESES[d.month - 1]}"
+
+
+def format_reminder(
+    kind: str, patient_name: str, starts_at: datetime, clinic_tz: tzinfo
+) -> str:
+    """Cuerpo del recordatorio según la spec 4.3 (R1, R2 o inmediato)."""
+    local = starts_at.astimezone(clinic_tz)
+    dia = DIAS_SEMANA[local.weekday()]
+    fecha = f"{local.day} de {MESES[local.month - 1]}"
+    hora = local.strftime("%H:%M")
+    if kind == "R2":
+        return (
+            f"Hola {patient_name}, tu cita en el consultorio de la Dra. Laura "
+            f"es mañana, {dia} {fecha} a las {hora}. ¿Sigues pudiendo asistir?"
+        )
+    return (
+        f"Hola {patient_name}, te recordamos tu cita en el consultorio de la "
+        f"Dra. Laura el {dia} {fecha} a las {hora}. ¿Nos confirmas?"
+    )
+
+
 AUTO_REPLY = {
     "confirm": "¡Gracias! Te esperamos.",
     "reschedule": "Entendido. La asistente te contactará para elegir una nueva fecha.",

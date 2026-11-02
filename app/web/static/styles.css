@@ -744,3 +744,363 @@ input:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ===== Rediseño T19–T21: barra superior, filas y agenda de día ===== */
+
+body {
+  padding-bottom: 72px;
+}
+
+.barra-superior {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-3);
+  min-height: 56px;
+  padding: var(--e-2) var(--e-3);
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+
+.barra-superior .marca {
+  color: var(--tinta);
+  min-width: 0;
+}
+
+.barra-superior .logo-diente {
+  color: var(--acento);
+}
+
+.barra-superior .marca-nombre {
+  color: var(--tinta);
+  font-size: var(--t-16);
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.nav-superior {
+  display: none;
+  align-items: center;
+  gap: var(--e-1);
+}
+
+.nav-superior-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  min-height: var(--objetivo-tactil);
+  padding: 0 var(--e-3);
+  border-radius: var(--radio-control);
+  color: var(--pizarra);
+  text-decoration: none;
+  font-size: var(--t-14);
+  font-weight: 700;
+}
+
+.nav-superior-item:hover {
+  background: var(--fondo);
+}
+
+.nav-superior-item.activo {
+  color: var(--acento);
+  box-shadow: inset 0 -2px 0 var(--acento);
+}
+
+.barra-superior .demo-badge {
+  flex: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--superficie);
+  background: var(--acento);
+  padding: var(--e-1) var(--e-2);
+  border-radius: var(--radio-control);
+}
+
+.panel {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--e-4);
+  gap: var(--e-4);
+}
+
+.pagina-cabecera {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+}
+
+.pagina-cabecera .subtitulo {
+  margin: 0;
+}
+
+.resumen {
+  gap: var(--e-2);
+}
+
+.tarjeta-etiqueta {
+  font-size: 0.75rem;
+}
+
+.tarjeta-secundaria {
+  font-size: var(--t-14);
+}
+
+.fila .nombre {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.fila .estado {
+  white-space: normal;
+  max-width: 100%;
+  overflow-wrap: break-word;
+}
+
+.fila-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.detalle {
+  font-size: var(--t-14);
+  color: var(--pizarra);
+  overflow-wrap: anywhere;
+}
+
+.fila-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.fila-acciones form {
+  margin: 0;
+}
+
+.boton-chico {
+  min-height: var(--objetivo-tactil);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.enlace {
+  color: var(--acento);
+  font-weight: 700;
+  text-decoration: none;
+  font-size: var(--t-14);
+}
+
+.enlace:hover {
+  text-decoration: underline;
+}
+
+.subtitulo-fuerte {
+  margin: var(--e-2) 0 0;
+  font-size: var(--t-18);
+}
+
+.franja-dias {
+  display: flex;
+  gap: var(--e-1);
+  overflow-x: auto;
+  padding-bottom: var(--e-1);
+}
+
+.dia-opcion {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--objetivo-tactil);
+  padding: 0 var(--e-3);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-control);
+  color: var(--pizarra);
+  background: var(--superficie);
+  font-size: var(--t-14);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.dia-opcion.activo {
+  color: var(--superficie);
+  background: var(--acento);
+  border-color: var(--acento);
+}
+
+.mensaje-error {
+  margin: 0;
+  padding: var(--e-3);
+  color: var(--peligro-texto);
+  background: var(--peligro-fondo);
+  border: 1px solid var(--peligro-texto);
+  border-radius: var(--radio-control);
+}
+
+.aviso {
+  margin: 0;
+  padding: var(--e-2) var(--e-3);
+  color: var(--atencion-texto);
+  background: var(--atencion-fondo);
+  border: 1px solid var(--atencion-texto);
+  border-radius: var(--radio-control);
+  font-size: var(--t-14);
+}
+
+.nota {
+  margin: var(--e-1) 0 0;
+  color: var(--pizarra);
+  font-size: var(--t-14);
+}
+
+.edicion, .nueva-cita {
+  padding: var(--e-4);
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-superficie);
+}
+
+.nueva-cita summary {
+  cursor: pointer;
+  font-size: var(--t-18);
+  font-weight: 700;
+  min-height: var(--objetivo-tactil);
+  display: flex;
+  align-items: center;
+}
+
+.nueva-cita[open] summary {
+  margin-bottom: var(--e-3);
+}
+
+.formulario-edicion {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+}
+
+.formulario-edicion label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-1);
+  font-size: var(--t-14);
+  color: var(--pizarra);
+}
+
+.formulario-edicion .campo {
+  width: 100%;
+}
+
+.fila-fuera {
+  border-left: 4px solid var(--atencion-texto);
+}
+
+@media (max-width: 420px) {
+  .resumen {
+    gap: var(--e-1);
+  }
+  .tarjeta {
+    padding: var(--e-2);
+  }
+  .tarjeta-etiqueta {
+    font-size: 0.75rem;
+  }
+  .fila {
+    gap: var(--e-1) var(--e-2);
+    padding: var(--e-2) var(--e-3);
+  }
+  .fila-atencion {
+    padding-left: calc(var(--e-3) + 4px);
+  }
+  .fila-acciones {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+@media (min-width: 768px) {
+  body {
+    padding-bottom: 0;
+  }
+  .barra-superior {
+    min-height: 64px;
+    padding: 0 var(--e-6);
+  }
+  .nav-superior {
+    display: flex;
+  }
+  .nav-inferior {
+    display: none;
+  }
+  .panel {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+
+@media (min-width: 1024px) {
+  .seccion .lista {
+    max-width: 100%;
+  }
+}
+.fila-texto .nombre {
+  flex: 0 0 auto;
+}
+.check {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--e-2);
+  font-size: var(--t-14);
+  color: var(--tinta);
+}
+
+.check input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--acento);
+}
+.formulario-edicion label.check {
+  flex-direction: row;
+  align-items: center;
+}
+.fila {
+  align-items: flex-start;
+}
+
+.fila-texto {
+  align-items: flex-start;
+}
+
+.fila-acciones {
+  align-self: center;
+}
+
+.edicion {
+  scroll-margin-top: 80px;
+}
+
+.boton,
+.boton-secundario {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+@media (max-width: 420px) {
+  .fila > .estado {
+    flex-basis: auto;
+  }
+}

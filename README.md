@@ -26,7 +26,8 @@ Estas metas **no se comprueban con pruebas automáticas**: se miden con el consu
 - Lectura de las citas de Google Calendar (solo lectura; la app no modifica el calendario).
 - Recordatorios automáticos por WhatsApp a 48 h y 24 h, dentro de una ventana de envío de 8:00 a 20:00.
 - Respuesta de un toque: **Confirmo**, **Reprogramar** o **Cancelar**; la última respuesta antes de la cita es la que cuenta.
-- Panel de la asistente con **Requieren atención** (reprogramaciones, cancelaciones, citas sin confirmar, errores de envío, citas sin teléfono) y **Agenda** por día.
+- Panel de la asistente con **Requieren atención** accionable (reprogramaciones, cancelaciones, citas sin confirmar, errores de envío, citas sin teléfono y sin consentimiento) y **Agenda de hoy / próximas citas** en filas.
+- **Edición de nombre y teléfono** desde la agenda simulada, para corregir una cita «Sin teléfono» sin borrarla y crearla de nuevo.
 - Reintentos de envío sin duplicar mensajes, y ningún fallo silencioso.
 - Respeto del consentimiento y de la baja del paciente.
 - **Modo demo** ejecutable sin credenciales, con simulador del paciente y reloj adelantable.
@@ -132,7 +133,8 @@ Abre `http://127.0.0.1:8000`. En la demo puedes:
 1. Ver la agenda y las citas que requieren atención.
 2. Abrir `/sim`, leer los mensajes enviados y **responder como paciente**.
 3. **Adelantar la hora simulada** para ver los recordatorios de 48 h y 24 h sin esperar.
-4. Forzar un fallo de envío y restaurar los datos de ejemplo.
+4. **Agregar o corregir el teléfono** desde «Requieren atención» o desde la Agenda.
+5. Forzar un fallo de envío y restaurar los datos de ejemplo.
 
 ## Configuración
 
@@ -142,7 +144,7 @@ Copia `.env.example` a `.env` (nunca se sube al repositorio). Valores por defect
 |---|---|
 | `MODE` | `demo` (por defecto) o `real` |
 | `DATABASE_PATH` | Archivo de la base de datos SQLite (`data/recordatorios.db`) |
-| `CLINIC_TIMEZONE` | Zona horaria del consultorio (nombre IANA; por definir) |
+| `CLINIC_TIMEZONE` | Zona horaria del consultorio (nombre IANA; por defecto `America/Bogota`) |
 | `SEND_WINDOW_START` / `SEND_WINDOW_END` | Ventana de envío (8 / 20) |
 | `SYNC_INTERVAL_MINUTES` | Frecuencia de lectura del calendario (5) |
 | `MAX_SEND_ATTEMPTS` | Intentos de envío antes de marcar error (3) |
@@ -185,7 +187,7 @@ La demo se siembra sola al arrancar. El SQLite es efímero (se recrea al reinici
 pytest -q
 ```
 
-- Un test por cada criterio de aceptación (CA-1 a CA-5) recorriendo el flujo completo en modo demo, además de pruebas por requisito.
+- **96 pruebas** en total: un test por cada criterio de aceptación (CA-1 a CA-9) recorriendo el flujo completo en modo demo, además de pruebas por requisito.
 - Reglas del dominio probadas con reloj controlado: 48 h, 24 h, citas agendadas con poca anticipación, ventana horaria y cambios de horario.
 - **Ninguna prueba llama a WhatsApp ni a Google.**
 
@@ -283,7 +285,7 @@ tasks.md, indica qué RF cubre y PÁRATE. No empieces la siguiente tarea.
 
 ```text
 Recorre specs/001-recordatorios-confirmacion/spec.md requisito por requisito
-(RF-1 a RF-17) y criterio por criterio (CA-1 a CA-5). Para cada uno indica qué
+(RF-1 a RF-18) y criterio por criterio (CA-1 a CA-9). Para cada uno indica qué
 test lo cubre y el resultado de ejecutarlo. Si alguno no está cubierto o falla,
 dilo claramente y propón primero la corrección de la spec, no del código.
 Después comprueba los criterios de finalización y dame un veredicto: ¿la spec

@@ -1,48 +1,39 @@
-{# Navegación: barra lateral (escritorio) + cabecera y barra inferior (celular).
-   Requiere `active` en {'panel', 'agenda', 'sim'}. #}
-<!-- Barra lateral (escritorio) -->
-<aside class="sidebar">
-  <a class="sidebar-marca" href="/">
+{# Navegación: barra superior (escritorio) + barra inferior (celular).
+   Requiere `active` en {'panel', 'agenda', 'sim'} y `demo`. #}
+<header class="barra-superior">
+  <a class="marca" href="/">
     <svg class="logo-diente" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.2-4.2-1.1-5.8.3C4.6 6.5 4 9.5 4 12c0 2.8.5 6.2 1.5 7.6.6.9 1.8 1.3 2.7.7.8-.4 1.1-1.2 1.1-2 0-1 .4-1.9 1.1-2.6.6-.6 1.5-.6 2.1 0 .7.7 1.1 1.6 1.1 2.6 0 .8.3 1.6 1.1 2 .9.6 2.1.2 2.7-.7 1-1.4 1.5-4.8 1.5-7.6 0-2.5-.6-5.5-2.2-7.2-1.6-1.4-4-1.5-5.8-.3z"/></svg>
-    <span>Consultorio de la Dra. Laura</span>
+    <span class="marca-nombre">Consultorio de la Dra. Laura</span>
   </a>
-  <nav class="sidebar-nav">
-    <a class="nav-item {% if active == 'panel' %}activo{% endif %}" href="/">
+
+  <nav class="nav-superior" aria-label="Principal">
+    <a class="nav-superior-item {% if active == 'panel' %}activo{% endif %}" href="/" {% if active == 'panel' %}aria-current="page"{% endif %}>
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
       <span>Panel</span>
     </a>
-    <a class="nav-item {% if active == 'agenda' %}activo{% endif %}" href="/agenda">
+    <a class="nav-superior-item {% if active == 'agenda' %}activo{% endif %}" href="/agenda" {% if active == 'agenda' %}aria-current="page"{% endif %}>
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
       <span>Agenda</span>
     </a>
-    <a class="nav-item {% if active == 'sim' %}activo{% endif %}" href="/sim">
+    <a class="nav-superior-item {% if active == 'sim' %}activo{% endif %}" href="/sim" {% if active == 'sim' %}aria-current="page"{% endif %}>
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
       <span>Simulador</span>
     </a>
   </nav>
-  {% if demo %}<span class="demo-badge">Demo · datos ficticios</span>{% endif %}
-</aside>
 
-<!-- Cabecera (celular) -->
-<header class="cabecera">
-  <div class="marca">
-    <svg class="logo-diente" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4.5c-1.8-1.2-4.2-1.1-5.8.3C4.6 6.5 4 9.5 4 12c0 2.8.5 6.2 1.5 7.6.6.9 1.8 1.3 2.7.7.8-.4 1.1-1.2 1.1-2 0-1 .4-1.9 1.1-2.6.6-.6 1.5-.6 2.1 0 .7.7 1.1 1.6 1.1 2.6 0 .8.3 1.6 1.1 2 .9.6 2.1.2 2.7-.7 1-1.4 1.5-4.8 1.5-7.6 0-2.5-.6-5.5-2.2-7.2-1.6-1.4-4-1.5-5.8-.3z"/></svg>
-    <span class="marca-nombre">Consultorio de la Dra. Laura</span>
-  </div>
   {% if demo %}<span class="demo-badge">Demo · datos ficticios</span>{% endif %}
 </header>
 
-<!-- Barra inferior (celular) -->
-<nav class="nav-inferior">
-  <a class="nav-tab {% if active == 'panel' %}activo{% endif %}" href="/">
+<nav class="nav-inferior" aria-label="Principal en celular">
+  <a class="nav-tab {% if active == 'panel' %}activo{% endif %}" href="/" {% if active == 'panel' %}aria-current="page"{% endif %}>
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
     <span>Panel</span>
   </a>
-  <a class="nav-tab {% if active == 'agenda' %}activo{% endif %}" href="/agenda">
+  <a class="nav-tab {% if active == 'agenda' %}activo{% endif %}" href="/agenda" {% if active == 'agenda' %}aria-current="page"{% endif %}>
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
     <span>Agenda</span>
   </a>
-  <a class="nav-tab {% if active == 'sim' %}activo{% endif %}" href="/sim">
+  <a class="nav-tab {% if active == 'sim' %}activo{% endif %}" href="/sim" {% if active == 'sim' %}aria-current="page"{% endif %}>
     <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
     <span>Simulador</span>
   </a>

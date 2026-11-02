@@ -35,7 +35,7 @@ def run_cycle(
         window_start=window_start,
         window_end=window_end,
     )
-    dispatch_due_reminders(repo, messaging, now=now)
+    dispatch_due_reminders(repo, messaging, now=now, clinic_tz=clinic_tz)
     _mark_unconfirmed_due(
         repo, now=now, unconfirmed_after_hours=unconfirmed_after_hours
     )

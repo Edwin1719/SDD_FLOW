@@ -3,38 +3,22 @@
 from __future__ import annotations
 
 from datetime import date, datetime, time, timedelta, timezone
-
 import secrets
+
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from app.texts_es import ATTENTION_TITLE, EMPTY_STATE, STATE_LABELS
+from app.texts_es import (
+    ATTENTION_TITLE,
+    EMPTY_STATE,
+    STATE_LABELS,
+    fecha_larga,
+)
 from app.web.auth import SESSION_COOKIE, make_token, verify_token
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/web/templates")
-
-# Nombres de días y meses en español para fechas legibles (constitución 12).
-DIAS_SEMANA = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"]
-MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio",
-         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]
-
-
-def dia_legible(day: date, hoy: date) -> str:
-    """Etiqueta del día: «Hoy», «Mañana» o «Lunes 3 de noviembre»."""
-    if day == hoy:
-        return "Hoy"
-    if day == hoy + timedelta(days=1):
-        return "Mañana"
-    return f"{DIAS_SEMANA[day.weekday()].capitalize()} {day.day} de {MESES[day.month - 1]}"
-
-
-def fecha_hora_legible(momento: datetime) -> str:
-    """Fecha y hora en español: «Lunes 3 de noviembre, 14:30»."""
-    d = momento.date()
-    nombre = f"{DIAS_SEMANA[d.weekday()].capitalize()} {d.day} de {MESES[d.month - 1]}"
-    return f"{nombre}, {momento.strftime('%H:%M')}"
 
 # Tonos y símbolos por estado (skill brand-design).
 STATE_TONES = {
@@ -64,8 +48,42 @@ ATTENTION_STATES = {
     "cancelled_by_patient",
     "unconfirmed",
     "send_error",
+    "no_consent",
     "no_phone",
 }
+
+
+def dia_legible(day: date, hoy: date) -> str:
+    """Etiqueta del día: «Hoy», «Mañana» o «Lunes 3 de noviembre»."""
+    if day == hoy:
+        return "Hoy"
+    if day == hoy + timedelta(days=1):
+        return "Mañana"
+    return fecha_larga(day)
+
+
+def fecha_hora_legible(momento: datetime) -> str:
+    """Fecha y hora en español: «Lunes 3 de noviembre, 14:30»."""
+    return f"{fecha_larga(momento.date())}, {momento.strftime('%H:%M')}"
+
+
+def _view(row: dict, clinic_tz) -> dict:
+    """Vista de una cita para el panel y la agenda."""
+    local = datetime.fromisoformat(row["starts_at"]).astimezone(clinic_tz)
+    status = row["status"]
+    return {
+        "id": row["id"],
+        "event_id": row["event_id"],
+        "time": local.strftime("%H:%M"),
+        "name": row["patient_name"],
+        "phone": row["phone"],
+        "status": status,
+        "label": STATE_LABELS.get(status, status),
+        "tone": STATE_TONES.get(status, "neutro"),
+        "symbol": STATE_SYMBOLS.get(status, ""),
+        "local_date": local.date().isoformat(),
+        "date_label": fecha_larga(local.date()),
+    }
 
 
 @router.get("/")
@@ -83,55 +101,45 @@ def panel(request: Request):
     rows = list(repo.list_upcoming_appointments(today_start_utc))
 
     attention: list[dict] = []
+    today_rows: list[dict] = []
+    all_rows: list[dict] = []
     citas_hoy = 0
     confirmadas_hoy = 0
 
-    dias: list[str] = []
-    for i in range(7):
-        d = local_today + timedelta(days=i)
-        if i == 0:
-            dias.append("Hoy")
-        elif i == 1:
-            dias.append("Mañana")
-        else:
-            dias.append(f"{DIAS_SEMANA[d.weekday()][:3].capitalize()} {d.day}")
-
-    horas = [f"{h:02d}:00" for h in range(8, 21)]  # 8:00 a 20:00
-    celdas: list[list[list[dict]]] = [[[] for _ in range(7)] for _ in range(len(horas))]
-
     for row in rows:
-        local = datetime.fromisoformat(row["starts_at"]).astimezone(clinic_tz)
-        status = row["status"]
-        if local.date() == local_today:
+        view = _view(row, clinic_tz)
+        all_rows.append(view)
+        if view["local_date"] == local_today.isoformat():
             citas_hoy += 1
-            if status == "confirmed":
+            if view["status"] == "confirmed":
                 confirmadas_hoy += 1
-
-        view = {
-            "time": local.strftime("%H:%M"),
-            "name": row["patient_name"],
-            "label": STATE_LABELS.get(status, status),
-            "tone": STATE_TONES.get(status, "neutro"),
-            "symbol": STATE_SYMBOLS.get(status, ""),
-        }
-        if status in ATTENTION_STATES:
+            today_rows.append(view)
+        if view["status"] in ATTENTION_STATES:
             attention.append(view)
 
-        day_index = (local.date() - local_today).days
-        if 0 <= day_index < 7:
-            hour_index = max(0, min(local.hour - 8, len(horas) - 1))
-            celdas[hour_index][day_index].append(
-                {
-                    **view,
-                    "appointment_id": row["id"],
-                    "starts_at": row["starts_at"],
-                }
-            )
+    if today_rows:
+        agenda_title = "Agenda de hoy"
+        agenda_rows = today_rows
+    else:
+        agenda_title = "Próximas citas"
+        agenda_rows = all_rows
 
     resumen = [
-        {"etiqueta": "Citas hoy", "numero": citas_hoy, "secundaria": "en la agenda"},
-        {"etiqueta": "Requieren atención", "numero": len(attention), "secundaria": "para revisar"},
-        {"etiqueta": "Confirmadas hoy", "numero": confirmadas_hoy, "secundaria": "pacientes confirmados"},
+        {
+            "etiqueta": "Citas hoy",
+            "numero": citas_hoy,
+            "secundaria": "en la agenda",
+        },
+        {
+            "etiqueta": "Atención",
+            "numero": len(attention),
+            "secundaria": "requieren revisión",
+        },
+        {
+            "etiqueta": "Confirmadas",
+            "numero": confirmadas_hoy,
+            "secundaria": "hoy",
+        },
     ]
 
     return templates.TemplateResponse(
@@ -141,10 +149,11 @@ def panel(request: Request):
             "attention_title": ATTENTION_TITLE,
             "empty_state": EMPTY_STATE,
             "attention": attention,
+            "agenda_title": agenda_title,
+            "agenda_rows": agenda_rows,
+            "empty_agenda": len(agenda_rows) == 0,
             "resumen": resumen,
-            "dias": dias,
-            "horas": horas,
-            "celdas": celdas,
+            "hoy_label": fecha_larga(local_today),
             "empty": len(rows) == 0,
             "demo": request.app.state.mode == "demo",
         },

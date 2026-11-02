@@ -67,7 +67,10 @@ def apply_button_reply(
     )
 
     if applied and appointment.phone:
-        messaging.send(appointment.phone, AUTO_REPLY[action.value])
+        patient = repo.get_patient(appointment.phone)
+        # RF-8 y RF-9: no responder a quien no dio consentimiento o pidió la baja.
+        if patient is not None and patient["has_consent"] and not patient["opted_out"]:
+            messaging.send(appointment.phone, AUTO_REPLY[action.value])
 
     return applied
 

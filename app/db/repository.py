@@ -120,6 +120,31 @@ class Repository:
                 (_iso(starts_at), status, _iso(updated_at), appointment_id),
             )
 
+    def update_appointment_details(
+        self,
+        appointment_id: int,
+        *,
+        patient_name: str,
+        phone: str | None,
+        starts_at: datetime,
+        status: str,
+        updated_at: datetime,
+    ) -> None:
+        """Actualiza nombre, teléfono, fecha y estado de una cita (RF-18)."""
+        with self._conn:
+            self._conn.execute(
+                "UPDATE appointments SET patient_name = ?, phone = ?,"
+                " starts_at = ?, status = ?, updated_at = ? WHERE id = ?",
+                (
+                    patient_name,
+                    phone,
+                    _iso(starts_at),
+                    status,
+                    _iso(updated_at),
+                    appointment_id,
+                ),
+            )
+
     def skip_pending_reminders(self, appointment_id: int) -> None:
         """Marca como skipped los recordatorios pendientes de una cita."""
         with self._conn:

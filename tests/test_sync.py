@@ -30,6 +30,7 @@ def _event(
 
 def test_new_appointment_created(tmp_path):
     repo = connect(tmp_path / "data" / "db.sqlite")
+    repo.upsert_patient("+573001234567", has_consent=True)
     calendar = FakeCalendar([_event("evt-1", T1)])
     sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
 
@@ -45,6 +46,7 @@ def test_new_appointment_created(tmp_path):
 
 def test_moved_appointment_resets_and_reschedules(tmp_path):
     repo = connect(tmp_path / "data" / "db.sqlite")
+    repo.upsert_patient("+573001234567", has_consent=True)
     calendar = FakeCalendar([_event("evt-1", T1)])
     sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
     appointment = repo.get_appointment("evt-1")
@@ -128,4 +130,41 @@ def test_read_failure_preserves_local_data(tmp_path):
     appointment = repo.get_appointment("evt-1")
     assert appointment is not None
     assert appointment["status"] == "pending"
+    repo.close()
+
+def test_phone_added_without_moving_updates_and_schedules(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    calendar = FakeCalendar([_event("evt-1", T1, phone=None)])
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    assert repo.get_appointment("evt-1")["status"] == "no_phone"
+
+    repo.upsert_patient("+573009998877", has_consent=True)
+    calendar.events = [_event("evt-1", T1, phone="+573009998877")]
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    appointment = repo.get_appointment("evt-1")
+    assert appointment["phone"] == "+573009998877"
+    assert appointment["status"] == "pending"
+    assert {r["kind"] for r in repo.list_reminders(appointment["id"])} == {"R1", "R2"}
+    repo.close()
+
+
+def test_name_change_without_moving_updates_local(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    repo.upsert_patient("+573001234567", has_consent=True)
+    calendar = FakeCalendar([_event("evt-1", T1)])
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    calendar.events = [
+        CalendarEvent(
+            event_id="evt-1",
+            patient_name="Nombre Corregido",
+            starts_at=T1,
+            phone="+573001234567",
+        )
+    ]
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    assert repo.get_appointment("evt-1")["patient_name"] == "Nombre Corregido"
     repo.close()

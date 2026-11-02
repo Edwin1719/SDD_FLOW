@@ -91,44 +91,51 @@ Neutros, sin detalles clínicos. Los textos exactos son:
 
 1. **Resumen** (arriba): tres cifras de un vistazo — citas de hoy, citas que
    requieren atención y citas confirmadas hoy.
-2. **Agenda semanal** (calendario): los días de la semana en columnas y las
-   horas (8:00 a 20:00) en filas; cada cita es una tarjeta en su día y hora,
-   con hora, nombre del paciente y estado visible con color y texto. En
-   celular la grilla se desliza horizontalmente.
-3. **Requieren atención** (debajo): citas en estado Reprogramación solicitada,
-   Cancelada por paciente (espacio liberado), Sin confirmar, Error de envío y
-   Sin teléfono.
+2. **Requieren atención** (inmediatamente debajo del resumen): citas en estado
+   Reprogramación solicitada, Cancelada por paciente (espacio liberado), Sin
+   confirmar, Error de envío, Sin teléfono y Sin consentimiento. Cada fila
+   muestra hora, nombre, estado y una acción: **Agregar teléfono** (sin
+   teléfono, en demo), **Ver en agenda** o **Corregir en Google Calendar**
+   (modo real). No es una lista pasiva.
+3. **Agenda de hoy** (debajo): si hoy hay citas, una lista de filas con hora,
+   nombre, estado y teléfono; si no hay citas hoy, muestra las **próximas
+   citas** con su fecha. No hay grilla semanal en el Panel.
 
-En modo demo, al **seleccionar una tarjeta** aparece una barra de acciones
-arriba con **Confirmo, Reprogramar, Cancelar y BAJA**, que simulan la respuesta
-del paciente y actualizan el estado al instante (misma lógica del simulador).
-En modo real, el paciente responde por WhatsApp y esta barra no existe.
+Cada cita es una **fila de lista**, no una tarjeta: hora, nombre, estado y
+teléfono en una línea legible. En modo demo la fila permite **Editar** nombre y
+teléfono y **Mover** a otra fecha/hora; en modo real la edición se hace en
+Google Calendar.
+
+Navegación: **barra superior** con logo, Panel, Agenda y Simulador en
+escritorio; **barra inferior** con los mismos tres destinos en celular. El
+Panel tiene un `h1` («Panel») y la fecha del día.
 
 El panel aplica de forma completa la identidad visual de la skill
 `brand-design`: tipografía cargada, superficies y filas con la jerarquía
-definida, controles estilizados (sin estilo por defecto del navegador), foco
-visible y objetivos táctiles de 44 px.
+definida, controles estilizados, foco visible y objetivos táctiles de 44 px.
 
-La app **no modifica Google Calendar**: la asistente reprograma o elimina las
-citas allí, como hoy, y el sistema refleja el cambio.
+La app **no modifica Google Calendar**: la asistente reprograma, edita o elimina
+las citas allí, como hoy, y el sistema refleja el cambio. En modo demo, la
+agenda simulada sí permite editar porque representa el calendario.
 
 ### 4.5 Modo demo
 
 El proyecto debe poder ejecutarse sin credenciales (ver constitución, principio
 13). En modo demo:
 - Las citas provienen de un calendario de ejemplo con pacientes ficticios.
-- Los mensajes no salen a WhatsApp: se muestran en el panel como una
+- Los mensajes no salen a WhatsApp: se muestran en el simulador como una
   conversación simulada, y desde allí se puede **responder como el paciente**
   pulsando los botones.
 - Se puede **avanzar la fecha y hora simuladas** para ver los recordatorios
   de 48 h y 24 h sin esperar.
 - Se muestra una **agenda simulada** que representa Google Calendar: una vista
-  por día de las citas ficticias con controles para **crear, mover y cancelar**
-  citas ficticias. Al crearlas aparecen en el panel y programan sus
+  por día de las citas ficticias con controles para **crear, mover, editar y
+  cancelar** citas ficticias. Al crearlas aparecen en el panel y programan sus
   recordatorios; al moverlas se descartan los pendientes y el ciclo se
-  reinicia; al cancelarlas no se envían más recordatorios (RF-3).
+  reinicia; al cancelarlas no se envían más recordatorios (RF-3). En modo demo
+  la edición permite corregir el nombre y el teléfono.
 - Las tres vistas del modo demo (panel, agenda simulada y simulador) se enlazan
-  con una **navegación fija**: barra lateral en escritorio y barra inferior en
+  con una **navegación fija**: barra superior en escritorio y barra inferior en
   celular.
 - El panel muestra un recorrido guiado **«Así funciona»** con los pasos del
   ciclo (agendar → recordatorio → respuesta → estado) y enlaces a cada vista,
@@ -143,12 +150,16 @@ El proyecto debe poder ejecutarse sin credenciales (ver constitución, principio
   `Tel: +<código de país><número>`.
 - **RF-2:** SI una cita no tiene teléfono con ese formato, ENTONCES EL SISTEMA
   la mostrará en «Requieren atención» como «Sin teléfono» y no enviará
-  recordatorios.
-- **RF-3:** CUANDO una cita se cancele o cambie de fecha u hora en Google
-  Calendar, EL SISTEMA descartará los recordatorios pendientes de la fecha
-  anterior, y si fue movida reiniciará el ciclo con la nueva fecha en estado
-  Pendiente. El cambio se reflejará en pocos minutos (el plazo exacto se fija
-  en el plan).
+  recordatorios. En modo demo la asistente podrá corregir el teléfono desde la
+  agenda; en modo real lo corregirá en Google Calendar y el sistema reflejará
+  el cambio.
+- **RF-3:** CUANDO una cita se cancele o cambie de fecha, hora, nombre o
+  teléfono en Google Calendar, EL SISTEMA descartará los recordatorios
+  pendientes de la fecha anterior, y si fue movida reiniciará el ciclo con la
+  nueva fecha en estado Pendiente. Si aparece un teléfono válido y el paciente
+  tiene consentimiento registrado, la cita volverá a Pendiente y se programarán
+  sus recordatorios; si no, quedará Sin consentimiento. El cambio se reflejará
+  en pocos minutos (el plazo exacto se fija en el plan).
 
 ### Envío de recordatorios
 - **RF-4:** CUANDO falten 48 h para una cita en estado Pendiente y con
@@ -195,10 +206,13 @@ El proyecto debe poder ejecutarse sin credenciales (ver constitución, principio
 - **RF-17:** EL SISTEMA mostrará a la asistente el panel descrito en 4.4,
   utilizable desde un celular, con el estado de cada cita legible por texto
   además de por color.
+- **RF-18:** EL SISTEMA permitirá corregir nombre y teléfono de una cita en la
+  agenda simulada (modo demo) y reflejará los cambios de nombre o teléfono
+  hechos en Google Calendar (modo real), sin modificar el calendario.
 
 ## 6. Criterios de aceptación (verificables en modo demo)
 
-Siete criterios, todos comprobables en modo demo (sección 4.5).
+Nueve criterios, todos comprobables en modo demo (sección 4.5).
 
 **CA-1 — Recordatorios escalonados** (RF-4, RF-5, RF-10)
 - Dado una cita futura con teléfono y consentimiento, cuando la fecha simulada
@@ -237,11 +251,25 @@ Siete criterios, todos comprobables en modo demo (sección 4.5).
   fecha u hora, se descartan los recordatorios de la fecha anterior y el ciclo
   se reinicia en Pendiente; cuando la cancela, no se reciben más recordatorios.
 
+**CA-8 — Panel y agenda legibles a 360 px** (RF-17)
+- Dado el modo demo a 360 px, cuando se abren el Panel y la Agenda, entonces no
+  hay grilla de 7 columnas, cada cita es una fila a ancho completo, ningún
+  nombre se parte por letras ni ningún estado se corta, y «Requieren atención»
+  aparece antes que la agenda.
+
+**CA-9 — Corregir teléfono** (RF-2, RF-18)
+- Dado una cita «Sin teléfono» en modo demo, cuando la asistente agrega un
+  teléfono válido y confirma que el paciente ya dio su consentimiento, entonces
+  la cita pasa a Pendiente, sale de «Requieren atención» y se programan sus
+  recordatorios. Si no hay consentimiento, queda «Sin consentimiento». En modo
+  real, corregir el teléfono en Google Calendar produce el mismo efecto sin que
+  la app escriba en el calendario.
+
 ### Criterios de finalización
-- Los siete criterios (CA-1 a CA-7) se cumplen en modo demo.
+- Los nueve criterios (CA-1 a CA-9) se cumplen en modo demo.
 - Cada requisito funcional tiene al menos una prueba automática. En
-  particular: RF-8 (sin consentimiento no se envía), RF-10 (sin duplicados) y
-  RF-14 (la última respuesta manda).
+  particular: RF-8 (sin consentimiento no se envía), RF-10 (sin duplicados),
+  RF-14 (la última respuesta manda) y RF-18 (corregir teléfono).
 
 ## 7. Casos límite
 

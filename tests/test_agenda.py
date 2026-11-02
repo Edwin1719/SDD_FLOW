@@ -39,6 +39,7 @@ def test_create_appointment(tmp_path):
             "phone": "+57 300 999 0000",
             "date": future.strftime("%Y-%m-%d"),
             "time": future.strftime("%H:%M"),
+            "consent": "1",
         },
     )
 
@@ -96,3 +97,79 @@ def test_agenda_routes_absent_in_real_mode(tmp_path):
     assert client.get("/agenda").status_code == 404
     assert client.post("/agenda/create", data={}).status_code == 404
     app.state.repo.close()
+
+def test_agenda_is_day_view_without_grid(tmp_path):
+    app = create_app(_config(tmp_path))
+    repo = app.state.repo
+    client = TestClient(app)
+    appointment = repo.get_appointment("evt-1")
+    local_date = datetime.fromisoformat(appointment["starts_at"]).astimezone(
+        app.state.clinic_tz
+    )
+    response = client.get(f"/agenda?date={local_date.strftime('%Y-%m-%d')}")
+    assert response.status_code == 200
+    assert 'class="calendario"' not in response.text
+    assert "fila-cita" in response.text
+    repo.close()
+
+
+def test_edit_phone_from_agenda(tmp_path):
+    app = create_app(_config(tmp_path))
+    repo = app.state.repo
+    client = TestClient(app)
+
+    appointment = repo.get_appointment("evt-4")  # Pedro, sin teléfono
+    assert appointment["status"] == "no_phone"
+    local = datetime.fromisoformat(appointment["starts_at"]).astimezone(
+        app.state.clinic_tz
+    )
+
+    response = client.post(
+        "/agenda/edit",
+        data={
+            "appointment_id": str(appointment["id"]),
+            "patient_name": appointment["patient_name"],
+            "phone": "+57 300 555 6677",
+            "date": local.strftime("%Y-%m-%d"),
+            "time": local.strftime("%H:%M"),
+            "consent": "1",
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    edited = repo.get_appointment("evt-4")
+    assert edited["phone"] == "+573005556677"
+    assert edited["status"] == "pending"
+    assert any(
+        r["kind"] == "R1" and r["state"] == "pending"
+        for r in repo.list_reminders(edited["id"])
+    )
+    repo.close()
+
+
+def test_edit_rejects_invalid_phone(tmp_path):
+    app = create_app(_config(tmp_path))
+    repo = app.state.repo
+    client = TestClient(app)
+    appointment = repo.get_appointment("evt-4")
+    local = datetime.fromisoformat(appointment["starts_at"]).astimezone(
+        app.state.clinic_tz
+    )
+
+    response = client.post(
+        "/agenda/edit",
+        data={
+            "appointment_id": str(appointment["id"]),
+            "patient_name": appointment["patient_name"],
+            "phone": "300 555 6677",
+            "date": local.strftime("%Y-%m-%d"),
+            "time": local.strftime("%H:%M"),
+        },
+        follow_redirects=False,
+    )
+
+    assert response.status_code == 303
+    assert "error=phone" in response.headers["location"]
+    assert repo.get_appointment("evt-4")["phone"] is None
+    repo.close()

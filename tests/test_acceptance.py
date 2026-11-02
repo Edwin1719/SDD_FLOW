@@ -1,7 +1,8 @@
 """Pruebas de aceptación CA-1 a CA-5 (T13).
 
-Recorren el flujo completo en modo demo: sincronización, envío escalonado,
-respuestas, Sin confirmar y fallos visibles (spec 6).
+CA-8 (panel sin grilla) y CA-9 (edición de teléfono) se cubren en
+`test_panel.py` y `test_agenda.py`. Aquí se recorre el flujo completo en modo
+demo: sincronización, envío escalonado, respuestas, Sin confirmar y fallos.
 """
 
 from datetime import datetime, timezone

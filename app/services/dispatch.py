@@ -6,10 +6,11 @@ con reintentos limitados e idempotencia (RF-4, RF-5, RF-8, RF-10, RF-16).
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone, tzinfo
 
 from app.db.repository import Repository
 from app.ports.messaging import MessagingPort
+from app.texts_es import format_reminder
 
 # Estados de cita que no deben recibir el recordatorio 2 (RF-5).
 _NO_SEND_STATUSES = {"cancelled_by_patient", "reschedule_requested"}
@@ -26,12 +27,15 @@ def dispatch_due_reminders(
     messaging: MessagingPort,
     *,
     now: datetime,
+    clinic_tz: tzinfo = timezone.utc,
     max_attempts: int = 3,
     retry_delays: tuple[timedelta, ...] = _DEFAULT_RETRY_DELAYS,
 ) -> None:
     """Envía los recordatorios pendientes cuyo momento ya llegó."""
     for reminder in repo.list_due_reminders(now):
-        _dispatch_reminder(repo, messaging, reminder, now, max_attempts, retry_delays)
+        _dispatch_reminder(
+            repo, messaging, reminder, now, clinic_tz, max_attempts, retry_delays
+        )
 
 
 def _dispatch_reminder(
@@ -39,11 +43,18 @@ def _dispatch_reminder(
     messaging: MessagingPort,
     reminder: dict,
     now: datetime,
+    clinic_tz: tzinfo,
     max_attempts: int,
     retry_delays: tuple[timedelta, ...],
 ) -> None:
     appointment = repo.get_appointment_by_id(reminder["appointment_id"])
     if appointment is None:
+        repo.mark_reminder_skipped(reminder["id"])
+        return
+
+    starts_at = datetime.fromisoformat(appointment["starts_at"])
+    if starts_at <= now:
+        # La cita ya empezó: no enviar un recordatorio obsoleto.
         repo.mark_reminder_skipped(reminder["id"])
         return
 
@@ -66,7 +77,10 @@ def _dispatch_reminder(
 
     # RF-16: enviar con reintentos limitados e idempotencia (RF-10).
     try:
-        messaging.send(phone, f"Recordatorio {reminder['kind']}")
+        body = format_reminder(
+            reminder["kind"], appointment["patient_name"], starts_at, clinic_tz
+        )
+        messaging.send(phone, body)
     except Exception as exc:  # cualquier fallo de envío dispara el reintento
         attempts = reminder["attempts"] + 1
         if attempts >= max_attempts:

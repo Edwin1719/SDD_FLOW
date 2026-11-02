@@ -8,8 +8,8 @@
 - app/ports/             → interfaces: calendar, messaging, clock
 - app/adapters/          → fake_calendar, google_calendar, sim_messaging, whatsapp_cloud, relojes
 - app/db/                → esquema y repositorio sobre SQLite
-- app/web/               → rutas y plantillas Jinja2 (RF-17)
-- app/texts_es.py        → todos los textos en español (mensajes y panel)
+- app/web/               → panel, agenda de día y simulador en plantillas Jinja2 (RF-17, RF-18)
+- app/texts_es.py        → textos en español, fechas y cuerpos de recordatorio (spec 4.3)
 - app/config.py, app/main.py → variables de entorno; arranque y selección de adaptadores por modo
 - tests/                 → pytest, uno o más tests por RF
 
@@ -25,6 +25,7 @@ consultorio solo para mostrar y para la ventana de envío.
 | replies | id, appointment_id, action (confirm, reschedule, cancel, optout), received_at, applied |
 | sync_state | key, value (guarda el syncToken de Google) |
 
+- `appointments` se actualiza también cuando cambian nombre o teléfono, no solo la fecha (RF-3, RF-18).
 - `reminders` tiene clave única (appointment_id, kind, starts_at_snapshot) → un recordatorio nunca se duplica (RF-10).
 - Versión del esquema en `PRAGMA user_version` (= 1); las tablas se crean al arrancar si no existen.
 - El archivo se guarda en `DATABASE_PATH` (por defecto `data/recordatorios.db`); la carpeta `data/` se crea al arrancar si no existe. `.gitignore` excluye `*.db`, así que nunca llega al repositorio.
@@ -39,12 +40,14 @@ Al ingresar o actualizar una cita:
 
 ## Algoritmo de respuestas (RF-9, RF-11..RF-15)
 1. La respuesta llega con la cita y la fecha original (identificador del botón). Si llega después de starts_at o la fecha ya cambió → se guarda con applied = false y se ignora.
-2. Si no, la última respuesta recibida define el estado (RF-14) y se envía la respuesta automática.
+2. Si no, la última respuesta recibida define el estado (RF-14) y se envía la respuesta automática **solo si el paciente tiene consentimiento y no pidió la baja**.
 3. Texto «BAJA» (sin distinguir mayúsculas ni espacios) → `opted_out = true`. Desde ese momento no se le envía nada más a ese teléfono: se descartan los pendientes actuales y el envío (`dispatch`) descarta también cualquier recordatorio futuro de un teléfono con `opted_out = true` (por ejemplo, si la cita se mueve y se reprograma).
 4. Sin confirmar (RF-15): 3 h después de enviar R2, una cita no Confirmada pasa a Sin confirmar.
 
-## Teléfono (RF-1, RF-2)
+## Teléfono (RF-1, RF-2, RF-18)
 Se toma de la línea `Tel:` de la descripción del evento. Tras quitar espacios, guiones y paréntesis debe ser `+` seguido de 8 a 15 dígitos; cualquier otro formato → «Sin teléfono».
+
+En modo demo la agenda simulada permite corregir nombre y teléfono y confirmar el consentimiento. En modo real no se escribe en Google Calendar: la asistente corrige la descripción del evento y la sincronización actualiza la cita local; si aparece un teléfono válido y hay consentimiento, vuelve a Pendiente y se programan sus recordatorios; si no, queda Sin consentimiento.
 
 ## Reglas de no pérdida de datos
 - Si la lectura de Google Calendar falla, **no se modifica ni se cancela ninguna cita local**.
@@ -57,32 +60,35 @@ Se toma de la línea `Tel:` de la descripción del evento. Tras quitar espacios,
 - SQLite (`sqlite3` estándar) en vez de Postgres → sin servicios que administrar. En un host de disco efímero los datos se pierden al reiniciar: en la demo se restauran; para producción real, migrar a un servicio gestionado.
 - Planificador en el mismo proceso, revisando cada 60 s con reloj inyectable → permite simular el tiempo en la demo (CA-1).
 - Sondeo de Calendar cada 5 min con syncToken en vez de notificaciones push → sin URL pública ni renovación de canales; cumple el «pocos minutos» de RF-3.
-- Puertos y adaptadores (constitución 7 y 13). `MODE=demo` (por defecto) usa FakeCalendar, SimulatedMessaging y SimulatedClock; `MODE=real` usa los reales. En demo, `FakeCalendar` también permite **crear, mover y cancelar** citas ficticias (simula editar Google Calendar, RF-3). Los controles `/sim/*` y `/agenda*` no existen en modo real.
+- Puertos y adaptadores (constitución 7 y 13). `MODE=demo` (por defecto) usa FakeCalendar, SimulatedMessaging y SimulatedClock; `MODE=real` usa los reales. En demo, `FakeCalendar` también permite **crear, mover, editar y cancelar** citas ficticias (simula editar Google Calendar, RF-3). Los controles `/sim/*` y `/agenda*` no existen en modo real.
+- Navegación: barra superior blanca con logo y tres pestañas en escritorio; barra inferior con los tres destinos en celular. El Panel usa filas, no una grilla de 7 columnas; la Agenda es una vista de día.
+- Los datos de la demo se siembran en la zona del consultorio (por defecto `America/Bogota`) y en horario de 8:00 a 20:00; nunca en UTC a las 02:00.
 - Panel: contraseña única por variable de entorno y cookie de sesión firmada, solo en modo real.
 - Seguridad técnica: verificar la firma de cada petición del webhook de WhatsApp; pedir solo el permiso `calendar.events.readonly`; logs con teléfonos enmascarados (`+57******1234`) y sin nombres; secretos solo en variables de entorno (`.env.example` sin valores).
 - Valores iniciales configurables, a validar con la doctora: ventana de envío, 3 h para Sin confirmar, reintentos.
-- Dependencias de ejecución: fastapi, uvicorn, jinja2, python-multipart, httpx. Solo modo real: google-api-python-client, google-auth-oauthlib. Desarrollo: pytest y ruff (linter + formatter, `line-length = 88`, estilo uniforme sin el límite arbitrario de 79 de pycodestyle). Cualquier otra se justifica aquí; fijar versiones al instalar.
+- Dependencias de ejecución: fastapi, uvicorn, jinja2, python-multipart, httpx, tzdata (zonas IANA en Windows). Solo modo real: google-api-python-client, google-auth-oauthlib. Desarrollo: pytest y ruff (linter + formatter, `line-length = 88`, estilo uniforme sin el límite arbitrario de 79 de pycodestyle). Cualquier otra se justifica aquí; fijar versiones al instalar.
 - Identidad visual y tipografía: la skill `brand-design` define la paleta (blanco + azul corporativo), el logo de diente y la composición del panel. La fuente Atkinson Hyperlegible se carga vía Google Fonts con `font-display: swap` y respaldo `system-ui`; no es una dependencia de Python.
-- Variables: MODE, DATABASE_PATH, CLINIC_TIMEZONE, SEND_WINDOW_START/END, SYNC_INTERVAL_MINUTES, MAX_SEND_ATTEMPTS, UNCONFIRMED_AFTER_HOURS, PANEL_PASSWORD, SESSION_SECRET, GOOGLE_*, WHATSAPP_*.
+- Variables: MODE, DATABASE_PATH, CLINIC_TIMEZONE (por defecto `America/Bogota`), SEND_WINDOW_START/END, SYNC_INTERVAL_MINUTES, MAX_SEND_ATTEMPTS, UNCONFIRMED_AFTER_HOURS, PANEL_PASSWORD, SESSION_SECRET, GOOGLE_*, WHATSAPP_*.
 
 ## Rutas web
 | Ruta | Modo | Función |
 |---|---|---|
-| GET / | ambos | Panel: «Requieren atención» y «Agenda» (RF-17) |
+| GET / | ambos | Panel: «Requieren atención» accionable y próximas citas en filas (RF-17) |
 | GET /health | ambos | Comprobación de estado |
 | GET, POST /webhooks/whatsapp | real | Verificación inicial de Meta y recepción de respuestas |
-| GET /sim | demo | Conversaciones simuladas y botones «responder como paciente» |
+| GET /sim | demo | Conversaciones simuladas y botones «responder como paciente» (solo con teléfono y consentimiento) |
 | POST /sim/reply, /sim/clock/advance, /sim/fail-next-send, /sim/reset | demo | Responder, adelantar la hora, forzar un fallo (CA-5), restaurar datos |
-| GET /agenda | demo | Agenda simulada (Google Calendar ficticio): vista por día y controles crear/mover/cancelar (CA-7) |
+| GET /agenda?date=YYYY-MM-DD | demo | Agenda simulada por día, con franja de fechas y filas (CA-7, CA-8) |
 | POST /agenda/create, /agenda/move, /agenda/cancel | demo | Crear, mover y cancelar citas ficticias; disparan sincronización (RF-3) |
+| POST /agenda/edit | demo | Editar nombre, teléfono, fecha y hora; dispara sincronización (RF-18, CA-9) |
 
 Cada botón de WhatsApp lleva un identificador con la cita, la fecha original y la acción (por ejemplo `appt:<id>:<fecha>:confirm`). Las plantillas `reminder_48h` y `reminder_24h` usan los textos de la spec 4.3 con tres botones de respuesta rápida y deben ser aprobadas por Meta.
 
 ## Estrategia de pruebas
 - Dominio con reloj inyectado: cálculo de envíos (48 h, 24 h, menos de 48 h, menos de 24 h, ventana horaria, cambio de horario) y transiciones, incluido confirmar y luego cancelar.
 - Servicios con adaptadores simulados: sincronización (cita nueva, movida, cancelada, error de lectura sin pérdida de datos), envío con reintentos sin duplicados, baja y consentimiento.
-- Web: panel con cada estado en ancho de celular; rutas `/sim` ausentes en modo real.
-- Aceptación: un test por criterio CA-1 a CA-5 en modo demo.
+- Web: panel con cada estado en ancho de celular, sin grilla de 7 columnas; agenda de día; edición de teléfono; rutas `/sim` y `/agenda*` ausentes en modo real.
+- Aceptación: un test por criterio CA-1 a CA-9 en modo demo.
 - Ninguna prueba llama a WhatsApp ni a Google (constitución 8).
 
 ## Fuentes verificadas (consultadas el 29 de octubre de 2026)

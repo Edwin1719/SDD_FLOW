@@ -39,17 +39,36 @@ class FakeCalendar:
         self.events.append(event)
         return event
 
-    def move_event(self, event_id: str, starts_at: datetime) -> bool:
-        """Mueve una cita a otra fecha/hora (simula editarla en el calendario)."""
+    def update_event(
+        self,
+        event_id: str,
+        *,
+        patient_name: str,
+        phone: str | None,
+        starts_at: datetime,
+    ) -> bool:
+        """Edita nombre, teléfono y fecha de una cita ficticia (RF-18)."""
         for i, event in enumerate(self.events):
             if event.event_id == event_id:
                 self.events[i] = CalendarEvent(
                     event_id=event.event_id,
-                    patient_name=event.patient_name,
+                    patient_name=patient_name,
                     starts_at=starts_at,
-                    phone=event.phone,
+                    phone=phone,
                 )
                 return True
+        return False
+
+    def move_event(self, event_id: str, starts_at: datetime) -> bool:
+        """Mueve una cita a otra fecha/hora (simula editarla en el calendario)."""
+        for event in list(self.events):
+            if event.event_id == event_id:
+                return self.update_event(
+                    event_id,
+                    patient_name=event.patient_name,
+                    phone=event.phone,
+                    starts_at=starts_at,
+                )
         return False
 
     def cancel_event(self, event_id: str) -> bool:

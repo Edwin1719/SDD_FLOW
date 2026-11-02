@@ -16,16 +16,18 @@ Dos elementos con identidad: el **logo de diente** (marca) y el **color de estad
 ## Cabecera y logo
 
 - **Logo de diente**: SVG de línea, trazo uniforme, sin relleno; no se usan fotos ni ilustraciones.
-- En **celular**, cabecera fija arriba con fondo `--acento` (azul), logo y nombre **«Consultorio de la Dra. Laura» en blanco**, alineado a la izquierda, y a la derecha el badge «Demo · datos ficticios».
-- En **escritorio**, la marca vive en la barra lateral (ver Navegación).
+- **Barra superior** en todas las pantallas: fondo `--superficie` (blanco), borde inferior `--borde`, logo de diente en `--acento` y nombre **«Consultorio de la Dra. Laura» en `--tinta`**, alineado a la izquierda. A la derecha, el badge «Demo · datos ficticios» con fondo `--acento` y texto blanco (contraste 4.5:1 o mayor).
+- En celular la barra superior es compacta y el nombre puede ocupar dos líneas; no se usa una cabecera azul de altura completa.
+- En escritorio la marca vive en la barra superior, no en una barra lateral.
 
 ## Navegación
 
 Tres vistas: **Panel** (`/`), **Agenda** (`/agenda`) y **Simulador** (`/sim`), enlazadas con navegación fija:
 
-- **Escritorio (≥768 px):** barra lateral izquierda fija con fondo `--acento` (azul), logo de diente y nombre en blanco arriba, y los tres ítems con ícono y etiqueta. El ítem activo se resalta (píldora blanca con texto azul).
-- **Celular (<768 px):** barra inferior fija con tres pestañas (ícono + etiqueta); la activa en `--acento`, las inactivas en gris.
+- **Escritorio (≥768 px):** barra superior blanca con logo a la izquierda y los tres ítems con ícono y etiqueta al centro/derecha. El ítem activo se marca con texto `--acento` y un subrayado de 2 px. No hay barra lateral.
+- **Celular (<768 px):** barra superior compacta con logo y badge; barra inferior fija con tres pestañas (ícono + etiqueta). La activa en `--acento`, las inactivas en `--pizarra`. No se usa menú hamburguesa.
 - Íconos de línea simples: cuadrícula (Panel), calendario (Agenda), reproducir (Simulador).
+- El contenido usa el ancho disponible en escritorio (máximo ~1200 px), no una columna de 640 px con media pantalla vacía.
 
 ## Color
 
@@ -102,19 +104,21 @@ Base de 4 px (4, 8, 12, 16, 24, 32). Dos radios con jerarquía: 8 px en controle
 
 ## Composición del panel
 
-- Una columna, pensada primero para 360 px de ancho.
-- **Cabecera** con logo de diente y nombre, alineado a la izquierda.
-- **Resumen** (arriba): tres tarjetas con cifras de un vistazo — «Citas hoy», «Requieren atención» y «Confirmadas hoy». Cada tarjeta: etiqueta pequeña en mayúsculas, número grande y una línea secundaria.
-- **«Así funciona»** (bajo el resumen): recorrido guiado con los pasos del ciclo — agendar, recordatorio, respuesta del paciente, ver estado — cada paso con un enlace a su vista.
-- **Requieren atención** debajo: filas con barra de 4 px en el tono del estado.
-- **Agenda** debajo, agrupada por día con encabezados fijos («Hoy», «Mañana», «Lunes 3 de noviembre»).
-- Cada cita es una **fila de lista**, no una tarjeta: hora (grande, tabular) · nombre y dato secundario · etiqueta de estado. En pantallas estrechas la etiqueta baja bajo el nombre.
-- No inventes acciones ni pantallas que no estén en la spec: la asistente reprograma en Google Calendar, no aquí (salvo la agenda simulada del modo demo).
+- Una columna en celular y hasta dos columnas en escritorio, pensada primero para 360 px.
+- **Barra superior** con logo, nombre, navegación y badge (ver Navegación).
+- **Título** `h1` «Panel» y la fecha del día.
+- **Resumen** (arriba): tres tarjetas compactas — «Citas hoy», «Atención» y «Confirmadas». Etiqueta de 12 px como mínimo, número grande y una línea secundaria.
+- **Requieren atención** inmediatamente debajo del resumen: filas con barra de 4 px en el tono del estado, hora, nombre, estado y una acción concreta. No es una lista pasiva: «Agregar teléfono», «Ver en agenda» o «Corregir en Google Calendar».
+- **Agenda de hoy** debajo: filas de lista, no una grilla de 7 columnas. Si hoy no hay citas, muestra las próximas citas con su fecha.
+- **«Así funciona»** al final y compacto: recorrido guiado con enlaces a cada vista.
+- Cada cita es una **fila de lista**: hora (grande, tabular) · nombre y teléfono · etiqueta de estado · acciones. En pantallas estrechas el estado y las acciones bajan bajo el nombre, pero nunca se parten letras ni se corta el texto.
+- En escritorio, el Panel puede mostrar la agenda a la izquierda y el resumen/atención a la derecha; en celular va en una sola columna y «Requieren atención» aparece antes que la agenda.
+- No inventes acciones ni pantallas que no estén en la spec: en modo real la asistente edita o reprograma en Google Calendar; en modo demo la agenda simulada sí permite editar.
 - En modo demo, badge fijo «Demo · datos ficticios».
 
 ## Accesibilidad
 
-Objetivos táctiles de 44 px como mínimo; foco visible con el anillo de `--acento`; respeta `prefers-reduced-motion` (sin animaciones no pedidas por una acción); sin desbordamiento horizontal a 360 px; el estado nunca depende solo del color.
+Objetivos táctiles de 44 px como mínimo; foco visible con el anillo de `--acento`; respeta `prefers-reduced-motion` (sin animaciones no pedidas por una acción); sin desbordamiento horizontal a 360 px; el estado nunca depende solo del color. Los nombres y estados no se parten por letras: si una fila no cabe, el contenido baja de línea. La grilla de 7 columnas no se usa en celular.
 
 ## Voz y tono
 
@@ -144,4 +148,6 @@ Fondo crema con acento terracota, negro casi puro con un acento neón, tarjetas 
 3. Se ve bien a 360 px, sin desplazamiento horizontal.
 4. Los textos cumplen la sección de voz y coinciden con la spec.
 5. El foco con teclado es visible en cada control.
-6. La cabecera muestra el logo de diente y el nombre alineado a la izquierda.
+6. La barra superior muestra el logo de diente y el nombre alineado a la izquierda.
+7. No hay grilla de 7 columnas en celular: cada cita es una fila legible.
+8. Los textos sobre fondos de color cumplen 4.5:1, incluido el badge de demo.
