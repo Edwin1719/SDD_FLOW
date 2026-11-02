@@ -2,6 +2,8 @@
 
 Aplicación web ligera que reduce las inasistencias de un consultorio dental pequeño. Envía recordatorios por WhatsApp 48 h y 24 h antes de cada cita, permite al paciente **confirmar, reprogramar o cancelar con un toque**, y muestra a la asistente, en un panel pensado para celular, el estado de cada cita y cuáles requieren su atención. Se integra con Google Calendar, que sigue siendo la fuente de verdad de la agenda.
 
+https://turnito.app/wp-content/themes/turnito/assets/img/blog/apps-de-turnos-para-odontologos-en-argentina-2026-top-5.webp
+
 > **Estado del proyecto.** Funciona de punta a punta en **modo demo**, con un calendario y un WhatsApp simulados y pacientes ficticios. Los adaptadores reales de Google Calendar y WhatsApp Business están escritos y probados **solo con respuestas simuladas**; no se han verificado contra los servicios reales (ver [Limitaciones conocidas](#limitaciones-conocidas)).
 
 **Contenido:** [Problema](#problema-y-objetivo) · [Funcionalidades](#funcionalidades) · [Arquitectura](#arquitectura) · [Ciclo de una cita](#ciclo-de-vida-de-una-cita) · [Inicio rápido](#inicio-rápido) · [Configuración](#configuración) · [Modo real](#usar-los-servicios-reales) · [Privacidad](#privacidad-y-cumplimiento) · [Pruebas](#pruebas-y-calidad) · [Metodología](#metodología-spec-driven-development) · [Prompts](#trabajar-con-el-agente) · [Limitaciones](#limitaciones-conocidas) · [Hoja de ruta](#hoja-de-ruta)
