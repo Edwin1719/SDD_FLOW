@@ -1,4 +1,4 @@
-"""Lista de espera y recuperación de espacios liberados (Spec 003).
+"""Lista de espera y recuperación de espacios liberados (Spec 002).
 
 Lógica de aplicación: matching, oferta, respuesta y cierre. No escribe en
 Google Calendar; la asistente mueve o crea la cita y confirma en la app.

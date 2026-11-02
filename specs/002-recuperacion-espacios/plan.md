@@ -1,4 +1,4 @@
-# Plan técnico — Spec 003
+# Plan técnico — Spec 002
 
 **Feature:** Recuperación de espacios liberados con lista de espera.
 **Base:** [spec.md](spec.md). **Estado:** fases 1–5 implementadas en modo demo; pendiente el modo real y el piloto.

@@ -1,9 +1,9 @@
-# Spec 003 — Recuperación de espacios liberados
+# Spec 002 — Recuperación de espacios liberados
 
 **Proyecto:** Recordatorios para consultorio dental
 **Estado:** implementada en modo demo. Pendiente el modo real y el piloto.
 **Fecha:** 2026-11-02
-**Base:** [Spec 001](../001-recordatorios-confirmacion/spec.md) y [Paso 1 — ICP y user persona](../002-lanzamiento-produccion/01-icp-user-persona.md).
+**Base:** [Spec 001](../001-recordatorios-confirmacion/spec.md) y [ICP del proyecto](../../ICP.md).
 
 ## 1. Contexto y problema
 

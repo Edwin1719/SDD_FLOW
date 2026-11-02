@@ -1,4 +1,4 @@
-# Tareas — Spec 003
+# Tareas — Spec 002
 
 Implementación por fases. Todas las fases quedaron en verde en modo demo.
 

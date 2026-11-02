@@ -1,4 +1,4 @@
-"""Tests web de lista de espera y espacios liberados (Spec 003)."""
+"""Tests web de lista de espera y espacios liberados (Spec 002)."""
 
 from datetime import datetime, timedelta, timezone
 

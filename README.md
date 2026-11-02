@@ -28,7 +28,7 @@ Estas metas **no se comprueban con pruebas automáticas**: se miden con el consu
 - Respuesta de un toque: **Confirmo**, **Reprogramar** o **Cancelar**; la última respuesta antes de la cita es la que cuenta.
 - Panel de la asistente con **Requieren atención** accionable (reprogramaciones, cancelaciones, citas sin confirmar, errores de envío, citas sin teléfono y sin consentimiento) y **Agenda de hoy / próximas citas** en filas.
 - **Edición de nombre y teléfono** desde la agenda simulada, para corregir una cita «Sin teléfono» sin borrarla y crearla de nuevo.
-- **Lista de espera y recuperación de espacios liberados:** cuando se cancela o mueve una cita, la app detecta el espacio, propone candidatos y envía una oferta de un toque; la asistente mueve la cita en Google Calendar y confirma. (Spec 003, en modo demo.)
+- **Lista de espera y recuperación de espacios liberados:** cuando se cancela o mueve una cita, la app detecta el espacio, propone candidatos y envía una oferta de un toque; la asistente mueve la cita en Google Calendar y confirma. (Spec 002, en modo demo.)
 - Reintentos de envío sin duplicar mensajes, y ningún fallo silencioso.
 - Respeto del consentimiento y de la baja del paciente.
 - **Modo demo** ejecutable sin credenciales, con simulador del paciente y reloj adelantable.
@@ -197,6 +197,7 @@ pytest -q
 
 ```
 ├── AGENTS.md                         # cómo trabaja el agente
+├── ICP.md                            # ICP, mercado y modelo de negocio
 ├── README.md
 ├── LICENSE
 ├── .gitignore                        # secretos y datos locales (no se suben)
@@ -212,8 +213,7 @@ pytest -q
 │   │   ├── spec.md                   # qué y por qué
 │   │   ├── plan.md                   # cómo
 │   │   └── tasks.md                  # qué toca ahora
-│   ├── 002-lanzamiento-produccion/   # ICP y user persona
-│   └── 003-recuperacion-espacios/    # lista de espera y espacios liberados
+│   └── 002-recuperacion-espacios/    # lista de espera y espacios liberados
 ├── app/                              # código
 │   ├── main.py                       # punto de entrada
 │   ├── app_factory.py                # fábrica de la app y planificador de fondo

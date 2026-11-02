@@ -1,4 +1,4 @@
-"""Lista de espera y espacios liberados (Spec 003), solo modo demo."""
+"""Lista de espera y espacios liberados (Spec 002), solo modo demo."""
 
 from __future__ import annotations
 
