@@ -12,6 +12,7 @@ from app.ports.clock import ClockPort
 from app.ports.messaging import MessagingPort
 from app.services.dispatch import dispatch_due_reminders
 from app.services.sync import sync_calendar
+from app.services.waitlist import expire_offers
 
 
 def run_cycle(
@@ -36,6 +37,7 @@ def run_cycle(
         window_end=window_end,
     )
     dispatch_due_reminders(repo, messaging, now=now, clinic_tz=clinic_tz)
+    expire_offers(repo, now=now)
     _mark_unconfirmed_due(
         repo, now=now, unconfirmed_after_hours=unconfirmed_after_hours
     )

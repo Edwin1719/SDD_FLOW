@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import sqlite3
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 _DDL: list[str] = [
     """
@@ -14,6 +14,7 @@ _DDL: list[str] = [
         patient_name TEXT NOT NULL,
         phone TEXT,
         starts_at TEXT NOT NULL,
+        ends_at TEXT,
         status TEXT NOT NULL,
         updated_at TEXT NOT NULL
     )
@@ -54,12 +55,65 @@ _DDL: list[str] = [
         value TEXT NOT NULL
     )
     """,
+    """
+    CREATE TABLE IF NOT EXISTS waitlist_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        preferred_days TEXT NOT NULL DEFAULT '',
+        preferred_time_start TEXT,
+        preferred_time_end TEXT,
+        source TEXT NOT NULL DEFAULT 'asistente',
+        created_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'activa',
+        last_offered_at TEXT
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS freed_slots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id TEXT NOT NULL,
+        starts_at TEXT NOT NULL,
+        ends_at TEXT NOT NULL,
+        duration_estimated INTEGER NOT NULL DEFAULT 0,
+        source TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'libre',
+        recovered_at TEXT,
+        UNIQUE (event_id, starts_at, ends_at)
+    )
+    """,
+    """
+    CREATE TABLE IF NOT EXISTS slot_offers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        freed_slot_id INTEGER NOT NULL REFERENCES freed_slots(id),
+        waitlist_entry_id INTEGER NOT NULL REFERENCES waitlist_entries(id),
+        sent_at TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        responded_at TEXT,
+        response TEXT,
+        status TEXT NOT NULL DEFAULT 'enviada'
+    )
+    """,
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_offer_active_slot"
+    " ON slot_offers(freed_slot_id) WHERE status = 'enviada'",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_offer_active_entry"
+    " ON slot_offers(waitlist_entry_id) WHERE status = 'enviada'",
+    "CREATE INDEX IF NOT EXISTS idx_freed_slots_status ON freed_slots(status)",
 ]
 
 
 def init_schema(connection: sqlite3.Connection) -> None:
-    """Crea las tablas si no existen y fija la versión del esquema."""
+    """Crea las tablas si no existen, migra v1 a v2 y fija la versión."""
     for statement in _DDL:
         connection.execute(statement)
+
+    columns = {
+        row[1] for row in connection.execute("PRAGMA table_info(appointments)")
+    }
+    if "ends_at" not in columns:
+        connection.execute("ALTER TABLE appointments ADD COLUMN ends_at TEXT")
+
     connection.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
     connection.commit()

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lista de espera — Consultorio de la Dra. Laura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  {% set active = 'panel' %}
+  {% include '_navegacion.html' %}
+
+  <main class="panel">
+    <header class="pagina-cabecera">
+      <h1 class="titulo-pagina">Lista de espera</h1>
+      <p class="subtitulo">Pacientes que aceptan venir antes si se libera un espacio.</p>
+      <p class="detalle">{{ metrics.recovered }} de {{ metrics.total }} espacios recuperados{% if metrics.total %} ({{ metrics.rate }} %){% endif %}</p>
+      <a class="enlace" href="/">Volver al Panel</a>
+    </header>
+
+    {% if error %}
+    <p class="mensaje-error">{{ error }}</p>
+    {% endif %}
+
+    {% if slots %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Espacios liberados</h2>
+      </div>
+      <ul class="lista">
+        {% for s in slots %}
+        <li class="fila fila-espacio">
+          <span class="hora">{{ s.time }}</span>
+          <div class="fila-texto">
+            <span class="nombre">Espacio libre</span>
+            <span class="detalle">{{ s.date_label }} · {{ s.time }}–{{ s.end_time }} · {{ s.status_label }}{% if s.duration_estimated %} · duración estimada{% endif %}</span>
+          </div>
+          <div class="fila-acciones">
+            <a class="boton boton-chico" href="/espacios/{{ s.id }}">Ofrecer</a>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+
+    <section class="seccion">
+      <details class="nueva-cita" {% if not entries or edit_entry %}open{% endif %}>
+        <summary>{% if edit_entry %}Editar paciente de la lista{% else %}Agregar paciente a la lista{% endif %}</summary>
+        <form class="formulario-edicion" method="post" action="{% if edit_entry %}/lista-espera/editar{% else %}/lista-espera/crear{% endif %}">
+          {% if edit_entry %}<input type="hidden" name="entry_id" value="{{ edit_entry.id }}">{% endif %}
+          <label>Nombre del paciente
+            <input class="campo" type="text" name="patient_name" value="{{ edit_entry.patient_name if edit_entry else '' }}" required>
+          </label>
+          <label>Teléfono (con código de país)
+            <input class="campo" type="tel" name="phone" value="{{ edit_entry.phone if edit_entry else '' }}" placeholder="+57 300 123 4567" required>
+          </label>
+          <label>Tipo de cita
+            <select class="campo" name="reason">
+              {% for r in reasons %}
+              <option value="{{ r }}" {% if edit_entry and edit_entry.reason == r %}selected{% endif %}>{{ reason_labels[r] }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <fieldset class="dias-check">
+            <legend>Días preferidos</legend>
+            {% for d in days %}
+            <label class="check">
+              <input type="checkbox" name="days" value="{{ loop.index0 }}" {% if edit_entry and loop.index0 in selected_days %}checked{% endif %}>
+              {{ d.capitalize() }}
+            </label>
+            {% endfor %}
+          </fieldset>
+          <div class="formulario">
+            <label>Desde
+              <input class="campo" type="time" name="time_start" value="{{ edit_entry.preferred_time_start if edit_entry and edit_entry.preferred_time_start else '' }}">
+            </label>
+            <label>Hasta
+              <input class="campo" type="time" name="time_end" value="{{ edit_entry.preferred_time_end if edit_entry and edit_entry.preferred_time_end else '' }}">
+            </label>
+          </div>
+          <label class="check">
+            <input type="checkbox" name="consent" value="1" {% if edit_has_consent %}checked{% endif %}>
+            El paciente ya dio su consentimiento
+          </label>
+          <div class="grupo-botones">
+            <button class="boton" type="submit">{% if edit_entry %}Guardar cambios{% else %}Agregar a la lista{% endif %}</button>
+            {% if edit_entry %}<a class="boton-secundario boton" href="/lista-espera">Cancelar</a>{% endif %}
+          </div>
+        </form>
+      </details>
+    </section>
+
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Pacientes en espera</h2>
+        <span class="contador">{{ entries|length }}</span>
+      </div>
+      {% if entries %}
+      <ul class="lista">
+        {% for e in entries %}
+        <li class="fila fila-espera">
+          <div class="fila-texto">
+            <span class="nombre">{{ e.patient_name }}</span>
+            <span class="detalle">{{ e.phone }} · {{ reason_labels.get(e.reason, e.reason) }} · {{ e.preferred_label }}</span>
+          </div>
+          <span class="estado estado-{% if e.status == 'activa' %}exito{% elif e.status == 'sin_consentimiento' %}neutro{% else %}atencion{% endif %}">{{ e.status_label }}</span>
+          <div class="fila-acciones">
+            {% if e.active_offer %}
+            <a class="boton-secundario boton-chico" href="/espacios/{{ e.active_offer.freed_slot_id }}">Ver oferta</a>
+            {% endif %}
+            <a class="boton-secundario boton-chico" href="/lista-espera?edit={{ e.id }}">Editar</a>
+            {% if e.status == 'activa' %}
+            <form method="post" action="/lista-espera/estado">
+              <input type="hidden" name="entry_id" value="{{ e.id }}">
+              <input type="hidden" name="status" value="pausada">
+              <button class="boton-secundario boton-chico" type="submit">Pausar</button>
+            </form>
+            <form method="post" action="/lista-espera/estado">
+              <input type="hidden" name="entry_id" value="{{ e.id }}">
+              <input type="hidden" name="status" value="retirada">
+              <button class="boton-secundario boton-chico" type="submit">Retirar</button>
+            </form>
+            {% elif e.status == 'pausada' %}
+            <form method="post" action="/lista-espera/estado">
+              <input type="hidden" name="entry_id" value="{{ e.id }}">
+              <input type="hidden" name="status" value="activa">
+              <button class="boton-secundario boton-chico" type="submit">Reactivar</button>
+            </form>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="vacio">Todavía no hay pacientes en la lista de espera.</p>
+      {% endif %}
+    </section>
+  </main>
+</body>
+</html>

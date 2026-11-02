@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Espacio liberado — Consultorio de la Dra. Laura</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  {% set active = 'panel' %}
+  {% include '_navegacion.html' %}
+
+  <main class="panel">
+    <header class="pagina-cabecera">
+      <h1 class="titulo-pagina">Espacio liberado</h1>
+      <p class="subtitulo">{{ slot.date_label }} · {{ slot.time }}–{{ slot.end_time }}</p>
+      <a class="enlace" href="/lista-espera">Volver a la lista de espera</a>
+    </header>
+
+    {% if error %}
+    <p class="mensaje-error">{{ error }}</p>
+    {% endif %}
+
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Detalle</h2>
+        <span class="estado estado-{% if slot.status == 'recuperado' %}exito{% elif slot.status == 'ofrecido' or slot.status == 'reservado_pendiente' %}atencion{% elif slot.status == 'ocupado' or slot.status == 'no_recuperado' %}peligro{% else %}neutro{% endif %}">{{ slot.status_label }}</span>
+      </div>
+      <ul class="lista">
+        <li class="fila">
+          <div class="fila-texto">
+            <span class="nombre">{{ slot.date_label }}</span>
+            <span class="detalle">{{ slot.time }}–{{ slot.end_time }}{% if slot.duration_estimated %} · duración estimada{% endif %} · origen: {{ slot.source }}</span>
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    {% if active_offer %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Oferta activa</h2>
+      </div>
+      <ul class="lista">
+        <li class="fila">
+          <div class="fila-texto">
+            <span class="nombre">{{ active_offer.patient_name }}</span>
+            <span class="detalle">{{ active_offer.phone }} · oferta enviada</span>
+          </div>
+          <div class="fila-acciones">
+            <a class="boton-secundario boton-chico" href="/sim">Responder en el Simulador</a>
+          </div>
+        </li>
+      </ul>
+    </section>
+    {% endif %}
+
+    {% if slot.status == 'libre' %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Candidatos</h2>
+        <span class="contador">{{ candidates|length }}</span>
+      </div>
+      {% if candidates %}
+      <ul class="lista">
+        {% for c in candidates %}
+        <li class="fila">
+          <div class="fila-texto">
+            <span class="nombre">{{ c.patient_name }}</span>
+            <span class="detalle">{{ c.phone }}{% if c.preferred_label and c.preferred_label != 'Sin preferencia' %} · {{ c.preferred_label }}{% endif %}{% if c.reasons %} · {{ c.reasons|join(', ') }}{% endif %}</span>
+          </div>
+          <span class="contador">{{ c.score }}</span>
+          <div class="fila-acciones">
+            <form method="post" action="/espacios/{{ slot.id }}/ofrecer">
+              <input type="hidden" name="entry_id" value="{{ c.id }}">
+              <button class="boton boton-chico" type="submit">Ofrecer</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="vacio">No hay candidatos elegibles. Revisa la lista de espera o agrega un paciente.</p>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    {% if slot.status == 'reservado_pendiente' %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Confirmar recuperación</h2>
+      </div>
+      <p class="detalle">Mueve o crea la cita en Google Calendar y confirma aquí. La app no escribe en el calendario.</p>
+      <form method="post" action="/espacios/{{ slot.id }}/confirmar">
+        <button class="boton" type="submit">Ya moví la cita en Google Calendar</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if slot.status in ['libre', 'ofrecido', 'reservado_pendiente'] %}
+    <section class="seccion">
+      <form method="post" action="/espacios/{{ slot.id }}/cerrar">
+        <button class="boton-secundario" type="submit">Cerrar como no recuperado</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if history %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Historial de ofertas</h2>
+      </div>
+      <ul class="lista">
+        {% for h in history %}
+        <li class="fila">
+          <div class="fila-texto">
+            <span class="nombre">{{ h.patient_name }}</span>
+            <span class="detalle">{{ h.status }}{% if h.response and h.response != h.status %} · {{ h.response }}{% endif %}</span>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </main>
+</body>
+</html>

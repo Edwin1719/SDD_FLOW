@@ -1,7 +1,7 @@
 # Spec 003 — Recuperación de espacios liberados
 
 **Proyecto:** Recordatorios para consultorio dental
-**Estado:** propuesta para revisión. No implementada.
+**Estado:** implementada en modo demo. Pendiente el modo real y el piloto.
 **Fecha:** 2026-11-02
 **Base:** [Spec 001](../001-recordatorios-confirmacion/spec.md) y [Paso 1 — ICP y user persona](../002-lanzamiento-produccion/01-icp-user-persona.md).
 
@@ -181,7 +181,7 @@ Es la métrica que dice si la función **importa**. Debe medirse contra una lín
 
 ### Cómo se mide
 
-Eventos instrumentados: espacio_liberado, oferta_enviada, oferta_aceptada, oferta_rechazada, oferta_vencida, espacio_recuperado, espacio_no_recuperado, baja_paciente.
+En el MVP demo, la tasa se calcula con las tablas de espacios y ofertas: recuperados / liberados. Para el piloto se instrumentan los eventos espacio_liberado, oferta_enviada, oferta_aceptada, oferta_rechazada, oferta_vencida, espacio_recuperado, espacio_no_recuperado y baja_paciente.
 
 Se reportan semanalmente por consultorio y agregados. La línea base se toma de las 4 semanas previas al piloto.
 

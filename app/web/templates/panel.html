@@ -32,8 +32,30 @@
     <section class="seccion">
       <div class="seccion-cabecera">
         <h2 class="titulo">{{ attention_title }}</h2>
-        <span class="contador">{{ attention|length }}</span>
+        <span class="contador">{{ attention|length + slots|length }}</span>
       </div>
+      {% if slots %}
+      <ul class="lista">
+        {% for s in slots %}
+        <li class="fila fila-espacio">
+          <span class="hora">{{ s.time }}</span>
+          <div class="fila-texto">
+            <span class="nombre">Espacio liberado</span>
+            <span class="detalle">{{ s.date_label }} · {{ s.time }}–{{ s.end_time }} · {{ s.status_label }}{% if s.duration_estimated %} · duración estimada{% endif %}</span>
+          </div>
+          <div class="fila-acciones">
+            {% if s.status == 'reservado_pendiente' %}
+            <a class="boton boton-chico" href="/espacios/{{ s.id }}">Confirmar cita</a>
+            {% elif s.status == 'ofrecido' %}
+            <a class="boton-secundario boton-chico" href="/espacios/{{ s.id }}">Ver oferta</a>
+            {% else %}
+            <a class="boton boton-chico" href="/espacios/{{ s.id }}">Ofrecer a lista</a>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
       {% if attention %}
       <ul class="lista">
         {% for c in attention %}
@@ -56,9 +78,10 @@
         </li>
         {% endfor %}
       </ul>
-      {% else %}
+      {% elif not slots %}
       <p class="vacio">Nada pendiente. Todo al día.</p>
       {% endif %}
+      <a class="enlace" href="/lista-espera">Gestionar lista de espera</a>
     </section>
 
     <section class="seccion">

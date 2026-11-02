@@ -53,11 +53,32 @@ def format_reminder(
     )
 
 
+def format_slot_offer(
+    patient_name: str,
+    starts_at: datetime,
+    ends_at: datetime,
+    clinic_tz: tzinfo,
+) -> str:
+    """Mensaje de oferta de un espacio liberado."""
+    local = starts_at.astimezone(clinic_tz)
+    local_end = ends_at.astimezone(clinic_tz)
+    dia = DIAS_SEMANA[local.weekday()]
+    fecha = f"{local.day} de {MESES[local.month - 1]}"
+    return (
+        f"Hola {patient_name}, se liberó un espacio el {dia} {fecha} de "
+        f"{local.strftime('%H:%M')} a {local_end.strftime('%H:%M')}. "
+        "¿Lo tomas? Responde «Lo tomo» o «No puedo»."
+    )
+
+
 AUTO_REPLY = {
     "confirm": "¡Gracias! Te esperamos.",
     "reschedule": "Entendido. La asistente te contactará para elegir una nueva fecha.",
     "cancel": "Listo, cancelamos tu cita. Si quieres agendar otra, escríbenos.",
 }
+
+SLOT_ACCEPTED = "¡Listo! La asistente te confirmará la cita."
+SLOT_DECLINED = "Gracias, te avisaremos si surge otro espacio."
 
 # Nombres en español de los estados (spec 4.2).
 STATE_LABELS = {

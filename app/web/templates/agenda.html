@@ -17,7 +17,30 @@
     <header class="pagina-cabecera">
       <h1 class="titulo-pagina">Agenda</h1>
       <p class="subtitulo">Calendario simulado: representa Google Calendar, la fuente de verdad de las citas.</p>
+      <a class="enlace" href="/lista-espera">Lista de espera</a>
     </header>
+
+    {% if slots %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2 class="titulo">Espacios liberados</h2>
+      </div>
+      <ul class="lista">
+        {% for s in slots %}
+        <li class="fila fila-espacio">
+          <span class="hora">{{ s.time }}</span>
+          <div class="fila-texto">
+            <span class="nombre">Espacio libre</span>
+            <span class="detalle">{{ s.date_label }} · {{ s.time }}–{{ s.end_time }} · {{ s.status_label }}{% if s.duration_estimated %} · duración estimada{% endif %}</span>
+          </div>
+          <div class="fila-acciones">
+            <a class="boton-secundario boton-chico" href="/espacios/{{ s.id }}">Ver espacio</a>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
 
     <section class="seccion">
       <nav class="franja-dias" aria-label="Días de la semana">

@@ -16,6 +16,9 @@
 
   <main class="panel">
     <h1 class="titulo-pagina">Simulador</h1>
+    {% if error %}
+    <p class="mensaje-error">{{ error }}</p>
+    {% endif %}
     <p class="sim-ahora">Ahora: {{ now }}</p>
     <p class="subtitulo">Adelanta el reloj para disparar los recordatorios y responde como paciente; el estado cambia en el Panel.</p>
 
@@ -39,6 +42,28 @@
         </form>
       </div>
     </section>
+
+    {% if offers %}
+    <section class="seccion">
+      <h2 class="titulo">Ofertas de espacio</h2>
+      <ul class="lista">
+        {% for o in offers %}
+        <li class="cita-sim">
+          <div class="cita-sim-cabecera">
+            <span class="nombre">{{ o.patient_name }}</span>
+            <span class="estado estado-atencion">Oferta enviada</span>
+          </div>
+          <p class="detalle">{{ o.slot_label }}</p>
+          <form class="grupo-botones" method="post" action="/sim/offer/reply">
+            <input type="hidden" name="offer_id" value="{{ o.id }}">
+            <button class="boton" name="action" value="aceptar">Lo tomo</button>
+            <button class="boton-secundario" name="action" value="rechazar">No puedo</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
 
     <section class="seccion">
       <h2 class="titulo">Responder como paciente</h2>

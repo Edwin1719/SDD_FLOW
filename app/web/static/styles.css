@@ -1104,3 +1104,31 @@ body {
     flex-basis: auto;
   }
 }
+
+.dias-check {
+  margin: 0;
+  padding: var(--e-3);
+  border: 1px solid var(--borde);
+  border-radius: var(--radio-control);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--e-2);
+}
+
+.dias-check legend {
+  padding: 0 var(--e-1);
+  font-size: var(--t-14);
+  color: var(--pizarra);
+}
+
+.dias-check .check {
+  margin: 0;
+}
+
+.fila-espacio {
+  background: var(--fondo);
+}
+
+.fila-espera .fila-acciones {
+  margin-left: auto;
+}

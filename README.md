@@ -28,6 +28,7 @@ Estas metas **no se comprueban con pruebas automáticas**: se miden con el consu
 - Respuesta de un toque: **Confirmo**, **Reprogramar** o **Cancelar**; la última respuesta antes de la cita es la que cuenta.
 - Panel de la asistente con **Requieren atención** accionable (reprogramaciones, cancelaciones, citas sin confirmar, errores de envío, citas sin teléfono y sin consentimiento) y **Agenda de hoy / próximas citas** en filas.
 - **Edición de nombre y teléfono** desde la agenda simulada, para corregir una cita «Sin teléfono» sin borrarla y crearla de nuevo.
+- **Lista de espera y recuperación de espacios liberados:** cuando se cancela o mueve una cita, la app detecta el espacio, propone candidatos y envía una oferta de un toque; la asistente mueve la cita en Google Calendar y confirma. (Spec 003, en modo demo.)
 - Reintentos de envío sin duplicar mensajes, y ningún fallo silencioso.
 - Respeto del consentimiento y de la baja del paciente.
 - **Modo demo** ejecutable sin credenciales, con simulador del paciente y reloj adelantable.
@@ -135,6 +136,7 @@ Abre `http://127.0.0.1:8000`. En la demo puedes:
 3. **Adelantar la hora simulada** para ver los recordatorios de 48 h y 24 h sin esperar.
 4. **Agregar o corregir el teléfono** desde «Requieren atención» o desde la Agenda.
 5. Forzar un fallo de envío y restaurar los datos de ejemplo.
+6. Abrir **Lista de espera**, cancelar una cita en la Agenda, ofrecer el espacio liberado, responder «Lo tomo» en el Simulador y confirmar la recuperación.
 
 ## Configuración
 
@@ -155,7 +157,7 @@ Copia `.env.example` a `.env` (nunca se sube al repositorio). Valores por defect
 
 ## Usar los servicios reales
 
-Se activa con `MODE=real`. Requiere una app de Google con permiso de **solo lectura de eventos** y una cuenta de WhatsApp Business con plantillas aprobadas por Meta (`reminder_48h` y `reminder_24h`, con tres botones de respuesta rápida).
+Se activa con `MODE=real`. Requiere una app de Google con permiso de **solo lectura de eventos** y una cuenta de WhatsApp Business con plantillas aprobadas por Meta (`reminder_48h`, `reminder_24h` y una plantilla de espacio disponible, con botones de respuesta rápida).
 
 Precios, límites de envío, plazos de aprobación de plantillas y disponibilidad por país **no están verificados**: consúltalos en la documentación oficial de Meta y de Google antes de usarlo con pacientes reales. Las fuentes consultadas y lo pendiente están al final de `plan.md`.
 
@@ -187,7 +189,7 @@ La demo se siembra sola al arrancar. El SQLite es efímero (se recrea al reinici
 pytest -q
 ```
 
-- **96 pruebas** en total: un test por cada criterio de aceptación (CA-1 a CA-9) recorriendo el flujo completo en modo demo, además de pruebas por requisito.
+- **117 pruebas** en total: criterios CA-1 a CA-9 de la Spec 001, pruebas de la lista de espera y recuperación de espacios, y pruebas por requisito.
 - Reglas del dominio probadas con reloj controlado: 48 h, 24 h, citas agendadas con poca anticipación, ventana horaria y cambios de horario.
 - **Ninguna prueba llama a WhatsApp ni a Google.**
 
@@ -206,10 +208,12 @@ pytest -q
 │   └── SKILL.md
 ├── specs/
 │   ├── constitution.md               # principios innegociables
-│   └── 001-recordatorios-confirmacion/
-│       ├── spec.md                   # qué y por qué
-│       ├── plan.md                   # cómo
-│       └── tasks.md                  # qué toca ahora
+│   ├── 001-recordatorios-confirmacion/
+│   │   ├── spec.md                   # qué y por qué
+│   │   ├── plan.md                   # cómo
+│   │   └── tasks.md                  # qué toca ahora
+│   ├── 002-lanzamiento-produccion/   # ICP y user persona
+│   └── 003-recuperacion-espacios/    # lista de espera y espacios liberados
 ├── app/                              # código
 │   ├── main.py                       # punto de entrada
 │   ├── app_factory.py                # fábrica de la app y planificador de fondo
@@ -217,7 +221,7 @@ pytest -q
 │   ├── demo_seed.py                  # datos ficticios de la demo
 │   ├── texts_es.py                   # textos en español
 │   ├── domain/                       # lógica pura: modelos, estados, reglas
-│   ├── services/                     # sync, dispatch, replies, planner
+│   ├── services/                     # sync, dispatch, replies, planner, waitlist
 │   ├── ports/                        # interfaces: calendar, messaging, clock
 │   ├── adapters/                     # fake/real: calendar, messaging, clocks
 │   ├── db/                           # esquema y repositorio SQLite

@@ -12,7 +12,8 @@ from app.demo_seed import reset_demo
 from app.domain.models import ReplyAction
 from app.services.planner import run_cycle
 from app.services.replies import apply_button_reply, apply_optout
-from app.texts_es import STATE_LABELS
+from app.services.waitlist import WaitlistError, respond_offer
+from app.texts_es import STATE_LABELS, fecha_larga
 from app.web.routes import STATE_SYMBOLS, STATE_TONES, fecha_hora_legible
 
 router = APIRouter()
@@ -30,10 +31,11 @@ def _cycle(request: Request) -> None:
 
 
 @router.get("/sim")
-def sim(request: Request, fallo: int = 0):
+def sim(request: Request, fallo: int = 0, error: str | None = None):
     repo = request.app.state.repo
     clock = request.app.state.clock
     messaging = request.app.state.messaging
+    clinic_tz = request.app.state.clinic_tz
 
     appointments = list(repo.list_upcoming_appointments(clock.now()))
     names_by_phone = {
@@ -76,6 +78,23 @@ def sim(request: Request, fallo: int = 0):
         for to, body in messaging.messages
     ]
 
+    offers = []
+    for offer in repo.list_sent_offers():
+        slot = repo.get_freed_slot(offer["freed_slot_id"])
+        entry = repo.get_waitlist_entry(offer["waitlist_entry_id"])
+        if slot is None or entry is None:
+            continue
+        local = datetime.fromisoformat(slot["starts_at"]).astimezone(clinic_tz)
+        offers.append(
+            {
+                **offer,
+                "patient_name": entry["patient_name"],
+                "slot_label": f"{fecha_larga(local.date())}, "
+                f"{local.strftime('%H:%M')}–"
+                f"{datetime.fromisoformat(slot['ends_at']).astimezone(clinic_tz).strftime('%H:%M')}",
+            }
+        )
+
     return templates.TemplateResponse(
         request=request,
         name="sim.html",
@@ -85,7 +104,13 @@ def sim(request: Request, fallo: int = 0):
             ),
             "appointments": citas,
             "messages": messages,
+            "offers": offers,
             "fallo": bool(fallo),
+            "error": (
+                "No se pudo responder la oferta. Revisa el estado del espacio."
+                if error
+                else None
+            ),
         },
     )
 
@@ -142,6 +167,26 @@ def panel_reply(
             received_at=received_at,
         )
     return RedirectResponse("/", status_code=303)
+
+
+@router.post("/sim/offer/reply")
+def offer_reply(
+    request: Request,
+    offer_id: int = Form(...),
+    action: str = Form(...),
+):
+    try:
+        respond_offer(
+            request.app.state.repo,
+            request.app.state.messaging,
+            offer_id=offer_id,
+            action=action,
+            now=request.app.state.clock.now(),
+            clinic_tz=request.app.state.clinic_tz,
+        )
+    except WaitlistError:
+        return RedirectResponse("/sim?error=oferta", status_code=303)
+    return RedirectResponse("/sim", status_code=303)
 
 
 @router.post("/sim/clock/advance")

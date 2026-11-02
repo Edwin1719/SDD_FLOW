@@ -20,6 +20,7 @@ from app.services.planner import run_cycle
 from app.web.routes import router as panel_router
 from app.web.sim_routes import router as sim_router
 from app.web.agenda_routes import router as agenda_router
+from app.web.waitlist_routes import router as waitlist_router
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,7 @@ def create_app(config: Config | None = None) -> FastAPI:
         )
         app.include_router(sim_router)
         app.include_router(agenda_router)
+        app.include_router(waitlist_router)
     else:
         app.state.calendar = None
         app.state.messaging = None

@@ -26,7 +26,11 @@ class FakeCalendar:
         return list(self.events), None
 
     def create_event(
-        self, patient_name: str, starts_at: datetime, phone: str | None
+        self,
+        patient_name: str,
+        starts_at: datetime,
+        phone: str | None,
+        ends_at: datetime | None = None,
     ) -> CalendarEvent:
         """Agrega una cita ficticia (simula crearla en Google Calendar)."""
         self._seq += 1
@@ -35,6 +39,7 @@ class FakeCalendar:
             patient_name=patient_name,
             starts_at=starts_at,
             phone=phone,
+            ends_at=ends_at,
         )
         self.events.append(event)
         return event
@@ -46,15 +51,23 @@ class FakeCalendar:
         patient_name: str,
         phone: str | None,
         starts_at: datetime,
+        ends_at: datetime | None = None,
     ) -> bool:
-        """Edita nombre, teléfono y fecha de una cita ficticia (RF-18)."""
+        """Edita nombre, teléfono, fecha y duración de una cita ficticia."""
         for i, event in enumerate(self.events):
             if event.event_id == event_id:
+                duration = (
+                    event.ends_at - event.starts_at if event.ends_at else None
+                )
+                new_end = ends_at
+                if new_end is None and duration is not None:
+                    new_end = starts_at + duration
                 self.events[i] = CalendarEvent(
                     event_id=event.event_id,
                     patient_name=patient_name,
                     starts_at=starts_at,
                     phone=phone,
+                    ends_at=new_end,
                 )
                 return True
         return False

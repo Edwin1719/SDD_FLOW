@@ -56,9 +56,17 @@ class GoogleCalendar:
         if date_time is None:
             return None  # evento de día completo sin hora: se omite
         starts_at = datetime.fromisoformat(date_time).astimezone(timezone.utc)
+        end = item.get("end", {})
+        end_time = end.get("dateTime")
+        ends_at = (
+            datetime.fromisoformat(end_time).astimezone(timezone.utc)
+            if end_time
+            else None
+        )
         return CalendarEvent(
             event_id=item["id"],
             patient_name=item.get("summary", ""),
             starts_at=starts_at,
             phone=extract_phone(item.get("description", "")),
+            ends_at=ends_at,
         )

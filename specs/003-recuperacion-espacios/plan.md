@@ -1,7 +1,7 @@
 # Plan técnico — Spec 003
 
 **Feature:** Recuperación de espacios liberados con lista de espera.
-**Base:** [spec.md](spec.md). **Estado:** propuesta para revisión; no implementada.
+**Base:** [spec.md](spec.md). **Estado:** fases 1–5 implementadas en modo demo; pendiente el modo real y el piloto.
 
 ## 1. Enfoque
 
@@ -137,6 +137,8 @@ Eventos:
 - `espacio_no_recuperado`
 - `baja_paciente`
 
+En el MVP demo, la tasa se calcula de freed_slots y slot_offers. El log de eventos y el tablero semanal quedan para el piloto.
+
 Tablero semanal:
 
 - Espacios liberados, ofrecidos, recuperados.
@@ -154,7 +156,7 @@ Tablero semanal:
 | 2. Lista de espera y matching | Tabla, alta/edición, ranking | CA-1 y CA-3 con candidatos ordenados |
 | 3. Oferta y respuesta | Envío, vencimiento, aceptar/rechazar | CA-3, CA-4, CA-5, CA-7 |
 | 4. Confirmación y panel | Tarea de asistente, recuperado, panel | CA-2, CA-6, CA-8 |
-| 5. Métricas y demo | Eventos, tablero, simulador | Tasa de recuperación calculada; demo restaurable |
+| 5. Métricas y demo | Resumen de recuperación, simulador y demo | Tasa calculada desde las tablas; demo restaurable |
 
 ## 11. Plan de piloto
 

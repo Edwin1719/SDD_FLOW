@@ -4,7 +4,7 @@ Criterios de T6: cita nueva, movida, cancelada, sin teléfono, teléfono mal
 escrito y fallo de lectura sin perder datos (RF-1 a RF-3).
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
@@ -167,4 +167,120 @@ def test_name_change_without_moving_updates_local(tmp_path):
     sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
 
     assert repo.get_appointment("evt-1")["patient_name"] == "Nombre Corregido"
+    repo.close()
+
+def test_cancel_creates_freed_slot(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    repo.upsert_patient("+573001234567", has_consent=True)
+    event = CalendarEvent(
+        event_id="evt-1",
+        patient_name="Paciente",
+        starts_at=T1,
+        phone="+573001234567",
+        ends_at=T1 + timedelta(minutes=30),
+    )
+    calendar = FakeCalendar([event])
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    calendar.events = []
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    slots = repo.list_freed_slots()
+    assert len(slots) == 1
+    assert slots[0]["source"] == "cancelada"
+    assert slots[0]["starts_at"] == T1.isoformat()
+    assert slots[0]["ends_at"] == (T1 + timedelta(minutes=30)).isoformat()
+    assert slots[0]["duration_estimated"] == 0
+    repo.close()
+
+
+def test_move_creates_freed_slot_with_old_time(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    repo.upsert_patient("+573001234567", has_consent=True)
+    calendar = FakeCalendar(
+        [
+            CalendarEvent(
+                event_id="evt-1",
+                patient_name="Paciente",
+                starts_at=T1,
+                phone="+573001234567",
+                ends_at=T1 + timedelta(minutes=30),
+            )
+        ]
+    )
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    calendar.events = [
+        CalendarEvent(
+            event_id="evt-1",
+            patient_name="Paciente",
+            starts_at=T2,
+            phone="+573001234567",
+            ends_at=T2 + timedelta(minutes=30),
+        )
+    ]
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    slots = repo.list_freed_slots()
+    assert len(slots) == 1
+    assert slots[0]["source"] == "reprogramada"
+    assert slots[0]["starts_at"] == T1.isoformat()
+    repo.close()
+
+
+def test_missing_end_uses_estimated_duration(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    repo.upsert_patient("+573001234567", has_consent=True)
+    calendar = FakeCalendar(
+        [
+            CalendarEvent(
+                event_id="evt-1",
+                patient_name="Paciente",
+                starts_at=T1,
+                phone="+573001234567",
+            )
+        ]
+    )
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    calendar.events = []
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    slot = repo.list_freed_slots()[0]
+    assert slot["ends_at"] == (T1 + timedelta(minutes=30)).isoformat()
+    assert slot["duration_estimated"] == 1
+    repo.close()
+
+
+def test_new_appointment_occupies_freed_slot(tmp_path):
+    repo = connect(tmp_path / "data" / "db.sqlite")
+    repo.upsert_patient("+573001234567", has_consent=True)
+    calendar = FakeCalendar(
+        [
+            CalendarEvent(
+                event_id="evt-1",
+                patient_name="Paciente",
+                starts_at=T1,
+                phone="+573001234567",
+                ends_at=T1 + timedelta(minutes=30),
+            )
+        ]
+    )
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+    calendar.events = []
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+    slot = repo.list_freed_slots()[0]
+
+    calendar.events = [
+        CalendarEvent(
+            event_id="evt-2",
+            patient_name="Otro",
+            starts_at=T1,
+            phone="+573009999999",
+            ends_at=T1 + timedelta(minutes=30),
+        )
+    ]
+    sync_calendar(calendar, repo, now=NOW, clinic_tz=UTC)
+
+    assert repo.get_freed_slot(slot["id"])["status"] == "ocupado"
     repo.close()

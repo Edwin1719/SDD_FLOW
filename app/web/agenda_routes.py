@@ -16,7 +16,7 @@ from fastapi.templating import Jinja2Templates
 from app.domain.phone import extract_phone
 from app.services.planner import run_cycle
 from app.texts_es import DIAS_SEMANA, fecha_larga
-from app.web.routes import STATE_LABELS, STATE_SYMBOLS, STATE_TONES
+from app.web.routes import STATE_LABELS, STATE_SYMBOLS, STATE_TONES, _slot_view
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/web/templates")
@@ -109,6 +109,11 @@ def agenda(
             }
         )
 
+    slots = [
+        _slot_view(slot, tz)
+        for slot in request.app.state.repo.list_open_freed_slots()
+    ]
+
     edit_event = None
     if edit is not None:
         appointment = request.app.state.repo.get_appointment_by_id(edit)
@@ -135,6 +140,7 @@ def agenda(
         context={
             "selected_date": selected.isoformat(),
             "selected_label": fecha_larga(selected),
+            "slots": slots,
             "today_label": fecha_larga(today),
             "days": days,
             "events": within,

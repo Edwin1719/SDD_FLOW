@@ -86,6 +86,33 @@ def _view(row: dict, clinic_tz) -> dict:
     }
 
 
+
+SLOT_LABELS = {
+    "libre": "Libre",
+    "ofrecido": "Oferta enviada",
+    "reservado_pendiente": "Reservado pendiente",
+    "recuperado": "Recuperado",
+    "no_recuperado": "No recuperado",
+    "ocupado": "Ocupado",
+}
+
+
+def _slot_view(slot: dict, clinic_tz) -> dict:
+    starts_at = datetime.fromisoformat(slot["starts_at"])
+    ends_at = datetime.fromisoformat(slot["ends_at"])
+    local = starts_at.astimezone(clinic_tz)
+    local_end = ends_at.astimezone(clinic_tz)
+    return {
+        "id": slot["id"],
+        "time": local.strftime("%H:%M"),
+        "end_time": local_end.strftime("%H:%M"),
+        "date_label": fecha_larga(local.date()),
+        "status": slot["status"],
+        "status_label": SLOT_LABELS.get(slot["status"], slot["status"]),
+        "duration_estimated": slot["duration_estimated"],
+        "source": slot["source"],
+    }
+
 @router.get("/")
 def panel(request: Request):
     if request.app.state.mode == "real" and not _authenticated(request):
@@ -99,6 +126,11 @@ def panel(request: Request):
     today_start_utc = today_start.astimezone(timezone.utc)
 
     rows = list(repo.list_upcoming_appointments(today_start_utc))
+    slots = (
+        [_slot_view(slot, clinic_tz) for slot in repo.list_open_freed_slots()]
+        if request.app.state.mode == "demo"
+        else []
+    )
 
     attention: list[dict] = []
     today_rows: list[dict] = []
@@ -132,7 +164,7 @@ def panel(request: Request):
         },
         {
             "etiqueta": "Atención",
-            "numero": len(attention),
+            "numero": len(attention) + len(slots),
             "secundaria": "requieren revisión",
         },
         {
@@ -149,12 +181,13 @@ def panel(request: Request):
             "attention_title": ATTENTION_TITLE,
             "empty_state": EMPTY_STATE,
             "attention": attention,
+            "slots": slots,
             "agenda_title": agenda_title,
             "agenda_rows": agenda_rows,
             "empty_agenda": len(agenda_rows) == 0,
             "resumen": resumen,
             "hoy_label": fecha_larga(local_today),
-            "empty": len(rows) == 0,
+            "empty": len(rows) == 0 and len(slots) == 0,
             "demo": request.app.state.mode == "demo",
         },
     )

@@ -32,8 +32,17 @@ def test_connect_creates_folder_and_schema(tmp_path):
             " AND name NOT LIKE 'sqlite_%'"
         )
     }
-    assert tables == {"appointments", "patients", "reminders", "replies", "sync_state"}
-    assert conn.execute("PRAGMA user_version").fetchone()[0] == 1
+    assert tables == {
+        "appointments",
+        "patients",
+        "reminders",
+        "replies",
+        "sync_state",
+        "waitlist_entries",
+        "freed_slots",
+        "slot_offers",
+    }
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == 2
     conn.close()
 
 

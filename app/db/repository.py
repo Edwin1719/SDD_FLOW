@@ -33,20 +33,23 @@ class Repository:
         starts_at: datetime,
         status: str,
         updated_at: datetime,
+        ends_at: datetime | None = None,
     ) -> int:
         """Inserta una cita y devuelve su id."""
         with self._conn:
             cursor = self._conn.execute(
                 """
                 INSERT INTO appointments
-                    (event_id, patient_name, phone, starts_at, status, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?)
+                    (event_id, patient_name, phone, starts_at, ends_at,
+                     status, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     event_id,
                     patient_name,
                     phone,
                     _iso(starts_at),
+                    _iso(ends_at) if ends_at is not None else None,
                     status,
                     _iso(updated_at),
                 ),
@@ -129,16 +132,19 @@ class Repository:
         starts_at: datetime,
         status: str,
         updated_at: datetime,
+        ends_at: datetime | None = None,
     ) -> None:
-        """Actualiza nombre, teléfono, fecha y estado de una cita (RF-18)."""
+        """Actualiza nombre, teléfono, fecha, duración y estado (RF-18)."""
         with self._conn:
             self._conn.execute(
                 "UPDATE appointments SET patient_name = ?, phone = ?,"
-                " starts_at = ?, status = ?, updated_at = ? WHERE id = ?",
+                " starts_at = ?, ends_at = ?, status = ?, updated_at = ?"
+                " WHERE id = ?",
                 (
                     patient_name,
                     phone,
                     _iso(starts_at),
+                    _iso(ends_at) if ends_at is not None else None,
                     status,
                     _iso(updated_at),
                     appointment_id,
@@ -300,6 +306,290 @@ class Repository:
                 (phone,),
             )
 
+    def create_waitlist_entry(
+        self,
+        *,
+        patient_name: str,
+        phone: str,
+        reason: str,
+        preferred_days: str,
+        preferred_time_start: str | None,
+        preferred_time_end: str | None,
+        status: str,
+        created_at: datetime,
+        source: str = "asistente",
+    ) -> int:
+        """Registra una entrada de lista de espera y devuelve su id."""
+        with self._conn:
+            cursor = self._conn.execute(
+                """
+                INSERT INTO waitlist_entries
+                    (patient_name, phone, reason, preferred_days,
+                     preferred_time_start, preferred_time_end, source,
+                     created_at, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    patient_name,
+                    phone,
+                    reason,
+                    preferred_days,
+                    preferred_time_start,
+                    preferred_time_end,
+                    source,
+                    _iso(created_at),
+                    status,
+                ),
+            )
+        return cursor.lastrowid
+
+    def get_waitlist_entry(self, entry_id: int) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM waitlist_entries WHERE id = ?", (entry_id,)
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    def list_waitlist_entries(self) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM waitlist_entries ORDER BY created_at, id"
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def list_active_waitlist_entries(self) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM waitlist_entries WHERE status = 'activa'"
+            " ORDER BY created_at, id"
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_waitlist_status(self, entry_id: int, status: str) -> None:
+        with self._conn:
+            self._conn.execute(
+                "UPDATE waitlist_entries SET status = ? WHERE id = ?",
+                (status, entry_id),
+            )
+
+    def update_waitlist_entry(
+        self,
+        entry_id: int,
+        *,
+        patient_name: str,
+        phone: str,
+        reason: str,
+        preferred_days: str,
+        preferred_time_start: str | None,
+        preferred_time_end: str | None,
+    ) -> None:
+        with self._conn:
+            self._conn.execute(
+                "UPDATE waitlist_entries SET patient_name = ?, phone = ?,"
+                " reason = ?, preferred_days = ?, preferred_time_start = ?,"
+                " preferred_time_end = ? WHERE id = ?",
+                (
+                    patient_name,
+                    phone,
+                    reason,
+                    preferred_days,
+                    preferred_time_start,
+                    preferred_time_end,
+                    entry_id,
+                ),
+            )
+
+    def mark_waitlist_offered(self, entry_id: int, when: datetime) -> None:
+        with self._conn:
+            self._conn.execute(
+                "UPDATE waitlist_entries SET last_offered_at = ? WHERE id = ?",
+                (_iso(when), entry_id),
+            )
+
+    def count_offers_for_entry_since(self, entry_id: int, since: datetime) -> int:
+        row = self._conn.execute(
+            "SELECT COUNT(*) FROM slot_offers"
+            " WHERE waitlist_entry_id = ? AND sent_at >= ?",
+            (entry_id, _iso(since)),
+        ).fetchone()
+        return int(row[0])
+
+    def create_freed_slot(
+        self,
+        *,
+        event_id: str,
+        starts_at: datetime,
+        ends_at: datetime,
+        duration_estimated: bool,
+        source: str,
+        created_at: datetime,
+    ) -> int | None:
+        """Crea un espacio liberado; si ya existe, devuelve su id."""
+        with self._conn:
+            cursor = self._conn.execute(
+                """
+                INSERT OR IGNORE INTO freed_slots
+                    (event_id, starts_at, ends_at, duration_estimated,
+                     source, created_at, status)
+                VALUES (?, ?, ?, ?, ?, ?, 'libre')
+                """,
+                (
+                    event_id,
+                    _iso(starts_at),
+                    _iso(ends_at),
+                    int(duration_estimated),
+                    source,
+                    _iso(created_at),
+                ),
+            )
+        if cursor.rowcount:
+            return cursor.lastrowid
+        row = self._conn.execute(
+            "SELECT id FROM freed_slots"
+            " WHERE event_id = ? AND starts_at = ? AND ends_at = ?",
+            (event_id, _iso(starts_at), _iso(ends_at)),
+        ).fetchone()
+        return int(row[0]) if row is not None else None
+
+    def get_freed_slot(self, slot_id: int) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM freed_slots WHERE id = ?", (slot_id,)
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    def list_freed_slots(self, status: str | None = None) -> list[dict]:
+        if status is None:
+            rows = self._conn.execute(
+                "SELECT * FROM freed_slots ORDER BY starts_at, id"
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT * FROM freed_slots WHERE status = ?"
+                " ORDER BY starts_at, id",
+                (status,),
+            ).fetchall()
+        return [dict(row) for row in rows]
+
+    def list_open_freed_slots(self) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM freed_slots"
+            " WHERE status IN ('libre', 'ofrecido', 'reservado_pendiente')"
+            " ORDER BY starts_at, id"
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def set_freed_slot_status(
+        self,
+        slot_id: int,
+        status: str,
+        *,
+        recovered_at: datetime | None = None,
+    ) -> None:
+        with self._conn:
+            self._conn.execute(
+                "UPDATE freed_slots SET status = ?, recovered_at = ? WHERE id = ?",
+                (
+                    status,
+                    _iso(recovered_at) if recovered_at is not None else None,
+                    slot_id,
+                ),
+            )
+
+    def has_appointment_at(self, starts_at: datetime) -> bool:
+        """True si ya hay una cita local que ocupa ese inicio."""
+        row = self._conn.execute(
+            "SELECT 1 FROM appointments WHERE starts_at = ? LIMIT 1",
+            (_iso(starts_at),),
+        ).fetchone()
+        return row is not None
+
+    def has_appointment_for_phone_at(
+        self, phone: str, starts_at: datetime
+    ) -> bool:
+        """True si el paciente ya tiene una cita en ese inicio."""
+        row = self._conn.execute(
+            "SELECT 1 FROM appointments WHERE phone = ? AND starts_at = ? LIMIT 1",
+            (phone, _iso(starts_at)),
+        ).fetchone()
+        return row is not None
+
+    def create_slot_offer(
+        self,
+        *,
+        freed_slot_id: int,
+        waitlist_entry_id: int,
+        sent_at: datetime,
+        expires_at: datetime,
+    ) -> int:
+        with self._conn:
+            cursor = self._conn.execute(
+                """
+                INSERT INTO slot_offers
+                    (freed_slot_id, waitlist_entry_id, sent_at, expires_at, status)
+                VALUES (?, ?, ?, ?, 'enviada')
+                """,
+                (
+                    freed_slot_id,
+                    waitlist_entry_id,
+                    _iso(sent_at),
+                    _iso(expires_at),
+                ),
+            )
+        return cursor.lastrowid
+
+    def get_slot_offer(self, offer_id: int) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM slot_offers WHERE id = ?", (offer_id,)
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    def get_active_offer_for_slot(self, slot_id: int) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM slot_offers WHERE freed_slot_id = ?"
+            " AND status = 'enviada' LIMIT 1",
+            (slot_id,),
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    def get_active_offer_for_entry(self, entry_id: int) -> dict | None:
+        row = self._conn.execute(
+            "SELECT * FROM slot_offers WHERE waitlist_entry_id = ?"
+            " AND status = 'enviada' LIMIT 1",
+            (entry_id,),
+        ).fetchone()
+        return dict(row) if row is not None else None
+
+    def list_slot_offers(self, slot_id: int) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM slot_offers WHERE freed_slot_id = ? ORDER BY id",
+            (slot_id,),
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def list_sent_offers(self) -> list[dict]:
+        rows = self._conn.execute(
+            "SELECT * FROM slot_offers WHERE status = 'enviada'"
+            " ORDER BY expires_at, id"
+        ).fetchall()
+        return [dict(row) for row in rows]
+
+    def update_slot_offer(
+        self,
+        offer_id: int,
+        *,
+        status: str,
+        response: str | None = None,
+        responded_at: datetime | None = None,
+    ) -> None:
+        with self._conn:
+            self._conn.execute(
+                "UPDATE slot_offers SET status = ?, response = ?, responded_at = ?"
+                " WHERE id = ?",
+                (
+                    status,
+                    response,
+                    _iso(responded_at) if responded_at is not None else None,
+                    offer_id,
+                ),
+            )
+
     def list_appointments_with_r2_sent_before(self, cutoff: datetime) -> list[dict]:
         """Citas con el recordatorio 2 enviado antes de `cutoff`."""
         rows = self._conn.execute(
@@ -321,6 +611,9 @@ class Repository:
     def clear_all(self) -> None:
         """Vacía todas las tablas (para restaurar la demo)."""
         with self._conn:
+            self._conn.execute("DELETE FROM slot_offers")
+            self._conn.execute("DELETE FROM freed_slots")
+            self._conn.execute("DELETE FROM waitlist_entries")
             self._conn.execute("DELETE FROM replies")
             self._conn.execute("DELETE FROM reminders")
             self._conn.execute("DELETE FROM appointments")

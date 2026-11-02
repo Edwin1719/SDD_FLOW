@@ -15,6 +15,7 @@ class CalendarEvent:
     patient_name: str
     starts_at: datetime  # en UTC
     phone: str | None  # None si no hay teléfono con el formato esperado (RF-2)
+    ends_at: datetime | None = None  # fin del evento, si el calendario lo da
 
 
 class CalendarPort(Protocol):
